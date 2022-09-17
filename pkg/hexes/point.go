@@ -22,26 +22,12 @@
  * SOFTWARE.
  */
 
-package hex
+package hexes
 
-// abs is a helper function to get the absolute value of an integer
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
+type Point struct {
+	x, y float64
 }
 
-// mod is a helper function to get the modulus of an integer
-// (as opposed to %, which is the remainder operator)
-func mod(a, b int) int {
-	// you can check for b == 0 separately and do what you want
-	if b < 0 {
-		return -mod(-a, -b)
-	}
-	m := a % b
-	if m < 0 {
-		m += b
-	}
-	return m
+func NewPoint(x, y float64) Point {
+	return Point{x: x, y: y}
 }

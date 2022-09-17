@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package hex
+package hexes
 
 // this file implements the tests from https://www.redblobgames.com/grids/hexagons/codegen/output/lib.cpp
 
