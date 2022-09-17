@@ -25,6 +25,8 @@
 // Package board implements a hexagonal game board.
 package board
 
+// see https://www.redblobgames.com/grids/hexagons/ for background and overview
+
 import (
 	"bytes"
 	"fmt"
