@@ -48,8 +48,58 @@ func NewHex(q, r, s int) Hex {
 	return Hex{q: q, r: r, s: s}
 }
 
+func (a Hex) Add(b Hex) Hex {
+	return NewHex(a.q+b.q, a.r+b.r, a.s+b.s)
+}
+
+func (a Hex) DiagonalNeighbor(direction int) Hex {
+	return a.Add(hex_diagonals[direction])
+}
+
+func (a Hex) Distance(b Hex) int {
+	return a.Subtract(b).Length()
+}
+
 func (a Hex) Equals(b Hex) bool {
 	return a.q == b.q && a.s == b.s && a.r == b.r
+}
+
+func (a Hex) Length() int {
+	return (abs(a.q) + abs(a.r) + abs(a.s)) / 2
+}
+
+func (a Hex) LineDraw(b Hex) (results []Hex) {
+	N := a.Distance(b)
+
+	a_nudge := NewFractionalHex(float64(a.q)+1e-06, float64(a.r)+1e-06, float64(a.s)-2e-06)
+	b_nudge := NewFractionalHex(float64(b.q)+1e-06, float64(b.r)+1e-06, float64(b.s)-2e-06)
+	step := 1.0 / math.Max(float64(N), 1.0)
+
+	for i := 0; i <= N; i++ {
+		results = append(results, hex_round(hex_lerp(a_nudge, b_nudge, step*float64(i))))
+	}
+
+	return results
+}
+
+func (a Hex) Neighbor(direction int) Hex {
+	return a.Add(hex_direction(direction))
+}
+
+func (a Hex) RotateLeft() Hex {
+	return NewHex(-a.s, -a.q, -a.r)
+}
+
+func (a Hex) RotateRight() Hex {
+	return NewHex(-a.r, -a.s, -a.q)
+}
+
+func (a Hex) Scale(k int) Hex {
+	return NewHex(a.q*k, a.r*k, a.s*k)
+}
+
+func (a Hex) Subtract(b Hex) Hex {
+	return NewHex(a.q-b.q, a.r-b.r, a.s-b.s)
 }
 
 type FractionalHex struct {
@@ -111,23 +161,23 @@ func NewLayout(orientation Orientation, size, origin Point) Layout {
 }
 
 func hex_add(a, b Hex) Hex {
-	return NewHex(a.q+b.q, a.r+b.r, a.s+b.s)
+	return a.Add(b)
 }
 
 func hex_subtract(a, b Hex) Hex {
-	return NewHex(a.q-b.q, a.r-b.r, a.s-b.s)
+	return a.Subtract(b)
 }
 
 func hex_scale(a Hex, k int) Hex {
-	return NewHex(a.q*k, a.r*k, a.s*k)
+	return a.Scale(k)
 }
 
 func hex_rotate_left(a Hex) Hex {
-	return NewHex(-a.s, -a.q, -a.r)
+	return a.RotateLeft()
 }
 
 func hex_rotate_right(a Hex) Hex {
-	return NewHex(-a.r, -a.s, -a.q)
+	return a.RotateRight()
 }
 
 var hex_directions = []Hex{
@@ -144,7 +194,7 @@ func hex_direction(direction int) Hex {
 }
 
 func hex_neighbor(hex Hex, direction int) Hex {
-	return hex_add(hex, hex_direction(direction))
+	return hex.Neighbor(direction)
 }
 
 var hex_diagonals = []Hex{
@@ -157,7 +207,7 @@ var hex_diagonals = []Hex{
 }
 
 func hex_diagonal_neighbor(hex Hex, direction int) Hex {
-	return hex_add(hex, hex_diagonals[direction])
+	return hex.DiagonalNeighbor(direction)
 }
 
 // abs is a helper function to get the absolute value of an integer
@@ -169,11 +219,11 @@ func abs(x int) int {
 }
 
 func hex_length(hex Hex) int {
-	return (abs(hex.q) + abs(hex.r) + abs(hex.s)) / 2
+	return hex.Length()
 }
 
 func hex_distance(a, b Hex) int {
-	return hex_length(hex_subtract(a, b))
+	return a.Distance(b)
 }
 
 func hex_round(h FractionalHex) Hex {
@@ -200,16 +250,7 @@ func hex_lerp(a, b FractionalHex, t float64) FractionalHex {
 }
 
 func hex_linedraw(a, b Hex) (results []Hex) {
-	N := hex_distance(a, b)
-	a_nudge := NewFractionalHex(float64(a.q)+1e-06, float64(a.r)+1e-06, float64(a.s)-2e-06)
-	b_nudge := NewFractionalHex(float64(b.q)+1e-06, float64(b.r)+1e-06, float64(b.s)-2e-06)
-	step := 1.0 / math.Max(float64(N), 1.0)
-
-	for i := 0; i <= N; i++ {
-		results = append(results, hex_round(hex_lerp(a_nudge, b_nudge, step*float64(i))))
-	}
-
-	return results
+	return a.LineDraw(b)
 }
 
 type OFFSET int
