@@ -22,27 +22,15 @@
  * SOFTWARE.
  */
 
-// Package cli implements the command line interface.
-package cli
+package board
 
-import (
-	"github.com/spf13/cobra"
-)
+import "fmt"
 
-// cmdBase represents the base command when called without any subcommands
-var cmdBase = &cobra.Command{
-	Short:   "Wars of Warp game engine",
-	Long:    `wow is the game engine for Wars of Warp.`,
-	Version: "0.0.1",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-	},
+// point is a helper to print out coordinates for the SVG
+type point struct {
+	x, y float64
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the root Command.
-func Execute() error {
-	return cmdBase.Execute()
+func (p point) String() string {
+	return fmt.Sprintf("%f,%f", p.x, p.y)
 }

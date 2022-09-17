@@ -22,27 +22,18 @@
  * SOFTWARE.
  */
 
-// Package cli implements the command line interface.
-package cli
+// Package coords implements a hex-based coordinate system.
+package coords
 
-import (
-	"github.com/spf13/cobra"
-)
-
-// cmdBase represents the base command when called without any subcommands
-var cmdBase = &cobra.Command{
-	Short:   "Wars of Warp game engine",
-	Long:    `wow is the game engine for Wars of Warp.`,
-	Version: "0.0.1",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-	},
+type Coords struct {
+	Col, Row int
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the root Command.
-func Execute() error {
-	return cmdBase.Execute()
+func (c Coords) Less(d Coords) bool {
+	if c.Row < d.Row {
+		return true
+	} else if c.Row > d.Row {
+		return false
+	}
+	return c.Col < d.Col
 }

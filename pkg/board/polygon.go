@@ -22,27 +22,45 @@
  * SOFTWARE.
  */
 
-// Package cli implements the command line interface.
-package cli
+package board
 
 import (
-	"github.com/spf13/cobra"
+	"fmt"
+	"math"
 )
 
-// cmdBase represents the base command when called without any subcommands
-var cmdBase = &cobra.Command{
-	Short:   "Wars of Warp game engine",
-	Long:    `wow is the game engine for Wars of Warp.`,
-	Version: "0.0.1",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-	},
+// polygon is the actual hex on the board
+type polygon struct {
+	x, y, radius float64
+	label        string
+	style        struct {
+		fill        string
+		stroke      string
+		strokeWidth string
+	}
+	points []point
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the root Command.
-func Execute() error {
-	return cmdBase.Execute()
+func (p polygon) hexPoints() (points []point) {
+	for theta := 0.0; theta < math.Pi*2.0; theta += math.Pi / 3.0 {
+		points = append(points, point{x: p.x + p.radius*math.Sin(theta), y: p.y + p.radius*math.Cos(theta)})
+	}
+	return points
+}
+
+func (p polygon) String() string {
+	s := fmt.Sprintf(`<polygon style="fill: %s; stroke: %s; stroke-width: %s;"`, p.style.fill, p.style.stroke, p.style.strokeWidth)
+	if len(p.points) != 0 {
+		s += fmt.Sprintf(` points="`)
+		for i, pt := range p.points {
+			if i != 0 {
+				s += " "
+			}
+			s += pt.String()
+		}
+		s += `"`
+	}
+	s += "></polygon>\n"
+	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="12">%s</text>`, p.x, p.y, p.label)
+	return s
 }

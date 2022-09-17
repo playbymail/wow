@@ -22,27 +22,30 @@
  * SOFTWARE.
  */
 
-// Package cli implements the command line interface.
-package cli
+package board
 
-import (
-	"github.com/spf13/cobra"
-)
+import "fmt"
 
-// cmdBase represents the base command when called without any subcommands
-var cmdBase = &cobra.Command{
-	Short:   "Wars of Warp game engine",
-	Long:    `wow is the game engine for Wars of Warp.`,
-	Version: "0.0.1",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-	},
+// svg is the container for our board
+type svg struct {
+	id      string
+	viewBox struct {
+		minX, minY    int
+		width, height int
+	}
+	polygons []*polygon
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the root Command.
-func Execute() error {
-	return cmdBase.Execute()
+func (s svg) String() string {
+	t := "<svg"
+	if s.id != "" {
+		t += fmt.Sprintf(" id=%q", s.id)
+	}
+	t += fmt.Sprintf(` width="%d" height="%d"`, s.viewBox.width+40, s.viewBox.height+40)
+	t += fmt.Sprintf(` viewBox="%d %d %d %d"`, s.viewBox.minX, s.viewBox.minY, s.viewBox.width+40, s.viewBox.height+40)
+	t += ` xmlns="http://www.w3.org/2000/svg">`
+	for _, p := range s.polygons {
+		t += fmt.Sprintf("\n%s", p.String())
+	}
+	return t + "\n</svg>"
 }
