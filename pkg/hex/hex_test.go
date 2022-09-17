@@ -29,32 +29,56 @@ package hex
 import "testing"
 
 func TestHexArithmetic(t *testing.T) {
-	equal_hex(t, "hex_add", NewHex(4, -10, 6), hex_add(NewHex(1, -3, 2), NewHex(3, -7, 4)))
-	equal_hex(t, "hex_subtract", NewHex(-2, 4, -2), hex_subtract(NewHex(1, -3, 2), NewHex(3, -7, 4)))
+	a := NewHex(4, -10, 6)
+	if !a.Equals(hex_add(NewHex(1, -3, 2), NewHex(3, -7, 4))) {
+		t.Error("hex_add")
+	}
+
+	b := NewHex(-2, 4, -2)
+	if !b.Equals(hex_subtract(NewHex(1, -3, 2), NewHex(3, -7, 4))) {
+		t.Error("hex_subtract")
+	}
 }
 
 func TestHexDirection(t *testing.T) {
-	equal_hex(t, "hex_direction", NewHex(0, -1, 1), hex_direction(2))
+	a := NewHex(0, -1, 1)
+	if !a.Equals(hex_direction(2)) {
+		t.Error("hex_direction")
+	}
 }
 
 func TestHexNeighbor(t *testing.T) {
-	equal_hex(t, "hex_neighbor", NewHex(1, -3, 2), hex_neighbor(NewHex(1, -2, 1), 2))
+	a := NewHex(1, -3, 2)
+	if !a.Equals(hex_neighbor(NewHex(1, -2, 1), 2)) {
+		t.Error("hex_neighbor")
+	}
 }
 
 func TestHexDiagonal(t *testing.T) {
-	equal_hex(t, "hex_diagonal", NewHex(-1, -1, 2), hex_diagonal_neighbor(NewHex(1, -2, 1), 3))
+	a := NewHex(-1, -1, 2)
+	if !a.Equals(hex_diagonal_neighbor(NewHex(1, -2, 1), 3)) {
+		t.Error("hex_diagonal")
+	}
 }
 
 func TestHexDistance(t *testing.T) {
-	equal_int(t, "hex_distance", 7, hex_distance(NewHex(3, -7, 4), NewHex(0, 0, 0)))
+	if hex_distance(NewHex(3, -7, 4), NewHex(0, 0, 0)) != 7 {
+		t.Error("hex_distance")
+	}
 }
 
 func TestHexRotateRight(t *testing.T) {
-	equal_hex(t, "hex_rotate_right", hex_rotate_right(NewHex(1, -3, 2)), NewHex(3, -2, -1))
+	a := hex_rotate_right(NewHex(1, -3, 2))
+	if !a.Equals(NewHex(3, -2, -1)) {
+		t.Error("hex_rotate_right")
+	}
 }
 
 func TestHexRotateLeft(t *testing.T) {
-	equal_hex(t, "hex_rotate_left", hex_rotate_left(NewHex(1, -3, 2)), NewHex(-2, -1, 3))
+	a := hex_rotate_left(NewHex(1, -3, 2))
+	if !a.Equals(NewHex(-2, -1, 3)) {
+		t.Error("hex_rotate_left")
+	}
 }
 
 func TestHexRound(t *testing.T) {
@@ -74,71 +98,131 @@ func TestHexLinedraw(t *testing.T) {
 
 func TestLayout(t *testing.T) {
 	h := NewHex(3, 4, -7)
+
 	flat := NewLayout(layout_flat, NewPoint(10.0, 15.0), NewPoint(35.0, 71.0))
-	equal_hex(t, "layout", h, hex_round(pixel_to_hex(flat, hex_to_pixel(flat, h))))
+	if !h.Equals(hex_round(pixel_to_hex(flat, hex_to_pixel(flat, h)))) {
+		t.Error("layout")
+	}
+
 	pointy := NewLayout(layout_pointy, NewPoint(10.0, 15.0), NewPoint(35.0, 71.0))
-	equal_hex(t, "layout", h, hex_round(pixel_to_hex(pointy, hex_to_pixel(pointy, h))))
+	if !h.Equals(hex_round(pixel_to_hex(pointy, hex_to_pixel(pointy, h)))) {
+		t.Error("layout")
+	}
 }
 
 func TestOffsetRoundtrip(t *testing.T) {
 	a := NewHex(3, 4, -7)
+	if !a.Equals(qoffset_to_cube(EVEN, qoffset_from_cube(EVEN, a))) {
+		t.Error("conversion_from_to even-q")
+	}
+	if !a.Equals(qoffset_to_cube(ODD, qoffset_from_cube(ODD, a))) {
+		t.Error("conversion_from_to odd-q")
+	}
+	if !a.Equals(roffset_to_cube(EVEN, roffset_from_cube(EVEN, a))) {
+		t.Error("conversion_from_to even-r")
+	}
+	if !a.Equals(roffset_to_cube(ODD, roffset_from_cube(ODD, a))) {
+		t.Error("conversion_from_to odd-r")
+	}
+
 	b := NewOffsetCoord(1, -3)
-	equal_hex(t, "conversion_roundtrip even-q", a, qoffset_to_cube(EVEN, qoffset_from_cube(EVEN, a)))
-	equal_offsetcoord(t, "conversion_roundtrip even-q", b, qoffset_from_cube(EVEN, qoffset_to_cube(EVEN, b)))
-	equal_hex(t, "conversion_roundtrip odd-q", a, qoffset_to_cube(ODD, qoffset_from_cube(ODD, a)))
-	equal_offsetcoord(t, "conversion_roundtrip odd-q", b, qoffset_from_cube(ODD, qoffset_to_cube(ODD, b)))
-	equal_hex(t, "conversion_roundtrip even-r", a, roffset_to_cube(EVEN, roffset_from_cube(EVEN, a)))
-	equal_offsetcoord(t, "conversion_roundtrip even-r", b, roffset_from_cube(EVEN, roffset_to_cube(EVEN, b)))
-	equal_hex(t, "conversion_roundtrip odd-r", a, roffset_to_cube(ODD, roffset_from_cube(ODD, a)))
-	equal_offsetcoord(t, "conversion_roundtrip odd-r", b, roffset_from_cube(ODD, roffset_to_cube(ODD, b)))
+	if !b.Equals(qoffset_from_cube(EVEN, qoffset_to_cube(EVEN, b))) {
+		t.Error("conversion_to_from even-q")
+	}
+	if !b.Equals(qoffset_from_cube(ODD, qoffset_to_cube(ODD, b))) {
+		t.Error("conversion_to_from odd-q")
+	}
+	if !b.Equals(roffset_from_cube(EVEN, roffset_to_cube(EVEN, b))) {
+		t.Error("conversion_to_from even-r")
+	}
+	if !b.Equals(roffset_from_cube(ODD, roffset_to_cube(ODD, b))) {
+		t.Error("conversion_to_from odd-r")
+	}
 }
 
 func TestOffsetFromCube(t *testing.T) {
-	equal_offsetcoord(t, "offset_from_cube even-q", NewOffsetCoord(1, 3), qoffset_from_cube(EVEN, NewHex(1, 2, -3)))
-	equal_offsetcoord(t, "offset_from_cube odd-q", NewOffsetCoord(1, 2), qoffset_from_cube(ODD, NewHex(1, 2, -3)))
+	a := NewOffsetCoord(1, 3)
+	if !a.Equals(qoffset_from_cube(EVEN, NewHex(1, 2, -3))) {
+		t.Error("offset_from_cube even-q")
+	}
+
+	b := NewOffsetCoord(1, 2)
+	if !b.Equals(qoffset_from_cube(ODD, NewHex(1, 2, -3))) {
+		t.Error("offset_from_cube odd-q")
+	}
 }
 
 func TestOffsetToCube(t *testing.T) {
-	equal_hex(t, "offset_to_cube even-", NewHex(1, 2, -3), qoffset_to_cube(EVEN, NewOffsetCoord(1, 3)))
-	equal_hex(t, "offset_to_cube odd-q", NewHex(1, 2, -3), qoffset_to_cube(ODD, NewOffsetCoord(1, 2)))
+	a := NewHex(1, 2, -3)
+	if !a.Equals(qoffset_to_cube(EVEN, NewOffsetCoord(1, 3))) {
+		t.Error("offset_to_cube even-")
+	}
+
+	b := NewHex(1, 2, -3)
+	if !b.Equals(qoffset_to_cube(ODD, NewOffsetCoord(1, 2))) {
+		t.Error("offset_to_cube odd-q")
+	}
 }
 
 func TestDoubledRoundtrip(t *testing.T) {
 	a := NewHex(3, 4, -7)
+	if !a.Equals(qdoubled_to_cube(qdoubled_from_cube(a))) {
+		t.Error("conversion_from_to doubled-q")
+	}
+	if !a.Equals(rdoubled_to_cube(rdoubled_from_cube(a))) {
+		t.Error("conversion_from_to doubled-r")
+	}
+
 	b := NewDoubledCoord(1, -3)
-	equal_hex(t, "conversion_roundtrip doubled-q", a, qdoubled_to_cube(qdoubled_from_cube(a)))
-	equal_doubledcoord(t, "conversion_roundtrip doubled-q", b, qdoubled_from_cube(qdoubled_to_cube(b)))
-	equal_hex(t, "conversion_roundtrip doubled-r", a, rdoubled_to_cube(rdoubled_from_cube(a)))
-	equal_doubledcoord(t, "conversion_roundtrip doubled-r", b, rdoubled_from_cube(rdoubled_to_cube(b)))
+	if !b.Equals(qdoubled_from_cube(qdoubled_to_cube(b))) {
+		t.Error("conversion_to_from doubled-q")
+	}
+	if !b.Equals(rdoubled_from_cube(rdoubled_to_cube(b))) {
+		t.Error("conversion_to_from doubled-r")
+	}
 }
 
 func TestDoubledFromCube(t *testing.T) {
-	equal_doubledcoord(t, "doubled_from_cube doubled-q", NewDoubledCoord(1, 5), qdoubled_from_cube(NewHex(1, 2, -3)))
-	equal_doubledcoord(t, "doubled_from_cube doubled-r", NewDoubledCoord(4, 2), rdoubled_from_cube(NewHex(1, 2, -3)))
+	a := NewDoubledCoord(1, 5)
+	if !a.Equals(qdoubled_from_cube(NewHex(1, 2, -3))) {
+		t.Error("doubled_from_cube doubled-q")
+	}
+
+	b := NewDoubledCoord(4, 2)
+	if !b.Equals(rdoubled_from_cube(NewHex(1, 2, -3))) {
+		t.Error("doubled_from_cube doubled-r")
+	}
 }
 
 func TestDoubledToCube(t *testing.T) {
-	equal_hex(t, "doubled_to_cube doubled-q", NewHex(1, 2, -3), qdoubled_to_cube(NewDoubledCoord(1, 5)))
-	equal_hex(t, "doubled_to_cube doubled-r", NewHex(1, 2, -3), rdoubled_to_cube(NewDoubledCoord(4, 2)))
+	a := NewHex(1, 2, -3)
+	if !a.Equals(qdoubled_to_cube(NewDoubledCoord(1, 5))) {
+		t.Error("doubled_to_cube doubled-q")
+	}
+
+	b := NewHex(1, 2, -3)
+	if !b.Equals(rdoubled_to_cube(NewDoubledCoord(4, 2))) {
+		t.Error("doubled_to_cube doubled-r")
+	}
 }
 
 ////////////////////////////////////////////////////
 // helper functions for testing
 
 func equal_hex(t *testing.T, name string, a, b Hex) {
-	if !(a.q == b.q && a.s == b.s && a.r == b.r) {
+	if !a.Equals(b) {
 		t.Error(name)
 	}
 }
 
 func equal_offsetcoord(t *testing.T, name string, a, b OffsetCoord) {
-	if !(a.col == b.col && a.row == b.row) {
+	if !a.Equals(b) {
 		t.Error(name)
 	}
 }
 
 func equal_doubledcoord(t *testing.T, name string, a, b DoubledCoord) {
-	if !(a.col == b.col && a.row == b.row) {
+	if !a.Equals(b) {
 		t.Error(name)
 	}
 }

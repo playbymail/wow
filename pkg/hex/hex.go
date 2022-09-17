@@ -48,6 +48,10 @@ func NewHex(q, r, s int) Hex {
 	return Hex{q: q, r: r, s: s}
 }
 
+func (a Hex) Equals(b Hex) bool {
+	return a.q == b.q && a.s == b.s && a.r == b.r
+}
+
 type FractionalHex struct {
 	q, r, s float64
 }
@@ -67,12 +71,20 @@ func NewOffsetCoord(col, row int) OffsetCoord {
 	return OffsetCoord{col: col, row: row}
 }
 
+func (a OffsetCoord) Equals(b OffsetCoord) bool {
+	return a.col == b.col && a.row == b.row
+}
+
 type DoubledCoord struct {
 	col, row int
 }
 
 func NewDoubledCoord(col, row int) DoubledCoord {
 	return DoubledCoord{col: col, row: row}
+}
+
+func (a DoubledCoord) Equals(b DoubledCoord) bool {
+	return a.col == b.col && a.row == b.row
 }
 
 type Orientation struct {
