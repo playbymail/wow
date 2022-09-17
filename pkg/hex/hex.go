@@ -48,30 +48,32 @@ func NewHex(q, r, s int) Hex {
 	return Hex{q: q, r: r, s: s}
 }
 
-func (a Hex) Add(b Hex) Hex {
-	return NewHex(a.q+b.q, a.r+b.r, a.s+b.s)
+func (h Hex) Add(b Hex) Hex {
+	return NewHex(h.q+b.q, h.r+b.r, h.s+b.s)
 }
 
-func (a Hex) DiagonalNeighbor(direction int) Hex {
-	return a.Add(hex_diagonals[direction])
+func (h Hex) DiagonalNeighbor(direction int) Hex {
+	// direction = mod(direction, 6)
+	direction = (6 + (direction % 6)) % 6
+	return h.Add(hex_diagonals[direction])
 }
 
-func (a Hex) Distance(b Hex) int {
-	return a.Subtract(b).Length()
+func (h Hex) Distance(b Hex) int {
+	return h.Subtract(b).Length()
 }
 
-func (a Hex) Equals(b Hex) bool {
-	return a.q == b.q && a.s == b.s && a.r == b.r
+func (h Hex) Equals(b Hex) bool {
+	return h.q == b.q && h.s == b.s && h.r == b.r
 }
 
-func (a Hex) Length() int {
-	return (abs(a.q) + abs(a.r) + abs(a.s)) / 2
+func (h Hex) Length() int {
+	return (abs(h.q) + abs(h.r) + abs(h.s)) / 2
 }
 
-func (a Hex) LineDraw(b Hex) (results []Hex) {
-	N := a.Distance(b)
+func (h Hex) LineDraw(b Hex) (results []Hex) {
+	N := h.Distance(b)
 
-	a_nudge := NewFractionalHex(float64(a.q)+1e-06, float64(a.r)+1e-06, float64(a.s)-2e-06)
+	a_nudge := NewFractionalHex(float64(h.q)+1e-06, float64(h.r)+1e-06, float64(h.s)-2e-06)
 	b_nudge := NewFractionalHex(float64(b.q)+1e-06, float64(b.r)+1e-06, float64(b.s)-2e-06)
 	step := 1.0 / math.Max(float64(N), 1.0)
 
@@ -82,24 +84,49 @@ func (a Hex) LineDraw(b Hex) (results []Hex) {
 	return results
 }
 
-func (a Hex) Neighbor(direction int) Hex {
-	return a.Add(hex_direction(direction))
+func (h Hex) Multiply(k int) Hex {
+	return NewHex(h.q*k, h.r*k, h.s*k)
 }
 
-func (a Hex) RotateLeft() Hex {
-	return NewHex(-a.s, -a.q, -a.r)
+func (h Hex) Neighbor(direction int) Hex {
+	return h.Add(hex_direction(direction))
 }
 
-func (a Hex) RotateRight() Hex {
-	return NewHex(-a.r, -a.s, -a.q)
+func (h Hex) PolygonCorners(layout Layout) (corners []Point) {
+	center := hex_to_pixel(layout, h)
+	for i := 0; i < 6; i++ {
+		offset := hex_corner_offset(layout, i)
+		corners = append(corners, NewPoint(center.x+offset.x, center.y+offset.y))
+	}
+
+	return corners
 }
 
-func (a Hex) Scale(k int) Hex {
-	return NewHex(a.q*k, a.r*k, a.s*k)
+func (h Hex) RotateLeft() Hex {
+	return NewHex(-h.s, -h.q, -h.r)
 }
 
-func (a Hex) Subtract(b Hex) Hex {
-	return NewHex(a.q-b.q, a.r-b.r, a.s-b.s)
+func (h Hex) RotateRight() Hex {
+	return NewHex(-h.r, -h.s, -h.q)
+}
+
+func (h Hex) Scale(k int) Hex {
+	return NewHex(h.q*k, h.r*k, h.s*k)
+}
+
+func (h Hex) Subtract(b Hex) Hex {
+	return NewHex(h.q-b.q, h.r-b.r, h.s-b.s)
+}
+
+func (h Hex) ToPixel(layout Layout) Point {
+	M := layout.orientation
+	size := layout.size
+	origin := layout.origin
+
+	x := (M.f0*float64(h.q) + M.f1*float64(h.r)) * size.x
+	y := (M.f2*float64(h.q) + M.f3*float64(h.r)) * size.y
+
+	return NewPoint(x+origin.x, y+origin.y)
 }
 
 type FractionalHex struct {
@@ -190,6 +217,8 @@ var hex_directions = []Hex{
 }
 
 func hex_direction(direction int) Hex {
+	// direction = mod(direction, 6)
+	direction = (6 + (direction % 6)) % 6
 	return hex_directions[direction]
 }
 
@@ -208,14 +237,6 @@ var hex_diagonals = []Hex{
 
 func hex_diagonal_neighbor(hex Hex, direction int) Hex {
 	return hex.DiagonalNeighbor(direction)
-}
-
-// abs is a helper function to get the absolute value of an integer
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }
 
 func hex_length(hex Hex) int {
@@ -245,6 +266,7 @@ func hex_round(h FractionalHex) Hex {
 	return NewHex(qi, ri, si)
 }
 
+// hex_lerp does a linear interpolation of
 func hex_lerp(a, b FractionalHex, t float64) FractionalHex {
 	return NewFractionalHex(a.q*(1.0-t)+b.q*t, a.r*(1.0-t)+b.r*t, a.s*(1.0-t)+b.s*t)
 }
@@ -325,14 +347,7 @@ var layout_pointy = NewOrientation(math.Sqrt(3.0), math.Sqrt(3.0)/2.0, 0.0, 3.0/
 var layout_flat = NewOrientation(3.0/2.0, 0.0, math.Sqrt(3.0)/2.0, math.Sqrt(3.0), 2.0/3.0, 0.0, -1.0/3.0, math.Sqrt(3.0)/3.0, 0.0)
 
 func hex_to_pixel(layout Layout, h Hex) Point {
-	M := layout.orientation
-	size := layout.size
-	origin := layout.origin
-
-	x := (M.f0*float64(h.q) + M.f1*float64(h.r)) * size.x
-	y := (M.f2*float64(h.q) + M.f3*float64(h.r)) * size.y
-
-	return NewPoint(x+origin.x, y+origin.y)
+	return h.ToPixel(layout)
 }
 
 func pixel_to_hex(layout Layout, p Point) FractionalHex {
@@ -358,11 +373,5 @@ func hex_corner_offset(layout Layout, corner int) Point {
 }
 
 func polygon_corners(layout Layout, h Hex) (corners []Point) {
-	center := hex_to_pixel(layout, h)
-	for i := 0; i < 6; i++ {
-		offset := hex_corner_offset(layout, i)
-		corners = append(corners, NewPoint(center.x+offset.x, center.y+offset.y))
-	}
-
-	return corners
+	return h.PolygonCorners(layout)
 }
