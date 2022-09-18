@@ -71,7 +71,7 @@ func (h Hex) LineDraw(b Hex) (results []Hex) {
 	step := 1.0 / math.Max(float64(N), 1.0)
 
 	for i := 0; i <= N; i++ {
-		results = append(results, hex_round(hex_lerp(a_nudge, b_nudge, step*float64(i))))
+		results = append(results, a_nudge.Lerp(b_nudge, step*float64(i)).Round())
 	}
 
 	return results
@@ -83,16 +83,6 @@ func (h Hex) Multiply(k int) Hex {
 
 func (h Hex) Neighbor(direction int) Hex {
 	return h.Add(hex_direction(direction))
-}
-
-func (h Hex) PolygonCorners(layout Layout) (corners []Point) {
-	center := hex_to_pixel(layout, h)
-	for i := 0; i < 6; i++ {
-		offset := hex_corner_offset(layout, i)
-		corners = append(corners, NewPoint(center.x+offset.x, center.y+offset.y))
-	}
-
-	return corners
 }
 
 func (h Hex) RotateLeft() Hex {
@@ -109,17 +99,6 @@ func (h Hex) Scale(k int) Hex {
 
 func (h Hex) Subtract(b Hex) Hex {
 	return NewHex(h.q-b.q, h.r-b.r, h.s-b.s)
-}
-
-func (h Hex) ToPixel(layout Layout) Point {
-	M := layout.orientation
-	size := layout.size
-	origin := layout.origin
-
-	x := (M.f0*float64(h.q) + M.f1*float64(h.r)) * size.x
-	y := (M.f2*float64(h.q) + M.f3*float64(h.r)) * size.y
-
-	return NewPoint(x+origin.x, y+origin.y)
 }
 
 var hex_directions = []Hex{

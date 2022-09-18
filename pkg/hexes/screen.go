@@ -23,10 +23,3 @@
  */
 
 package hexes
-
-type HEXLAYOUT int
-
-const (
-	FLATHEX   HEXLAYOUT = 0
-	POINTYHEX HEXLAYOUT = 1
-)

@@ -24,6 +24,7 @@
 
 package hexes
 
+// Point is either a hex or screen coordinate
 type Point struct {
 	x, y float64
 }

@@ -30,12 +30,12 @@ import "testing"
 
 func TestHexArithmetic(t *testing.T) {
 	a := NewHex(4, -10, 6)
-	if !a.Equals(hex_add(NewHex(1, -3, 2), NewHex(3, -7, 4))) {
+	if !a.Equals(NewHex(1, -3, 2).Add(NewHex(3, -7, 4))) {
 		t.Error("hex_add")
 	}
 
 	b := NewHex(-2, 4, -2)
-	if !b.Equals(hex_subtract(NewHex(1, -3, 2), NewHex(3, -7, 4))) {
+	if !b.Equals(NewHex(1, -3, 2).Subtract(NewHex(3, -7, 4))) {
 		t.Error("hex_subtract")
 	}
 }
@@ -49,34 +49,34 @@ func TestHexDirection(t *testing.T) {
 
 func TestHexNeighbor(t *testing.T) {
 	a := NewHex(1, -3, 2)
-	if !a.Equals(hex_neighbor(NewHex(1, -2, 1), 2)) {
+	if !a.Equals(NewHex(1, -2, 1).Neighbor(2)) {
 		t.Error("hex_neighbor")
 	}
 }
 
 func TestHexDiagonal(t *testing.T) {
 	a := NewHex(-1, -1, 2)
-	if !a.Equals(hex_diagonal_neighbor(NewHex(1, -2, 1), 3)) {
+	if !a.Equals(NewHex(1, -2, 1).DiagonalNeighbor(3)) {
 		t.Error("hex_diagonal")
 	}
 }
 
 func TestHexDistance(t *testing.T) {
-	if hex_distance(NewHex(3, -7, 4), NewHex(0, 0, 0)) != 7 {
+	if NewHex(3, -7, 4).Distance(NewHex(0, 0, 0)) != 7 {
 		t.Error("hex_distance")
 	}
 }
 
 func TestHexRotateRight(t *testing.T) {
-	a := hex_rotate_right(NewHex(1, -3, 2))
-	if !a.Equals(NewHex(3, -2, -1)) {
+	a := NewHex(1, -3, 2)
+	if !a.RotateRight().Equals(NewHex(3, -2, -1)) {
 		t.Error("hex_rotate_right")
 	}
 }
 
 func TestHexRotateLeft(t *testing.T) {
-	a := hex_rotate_left(NewHex(1, -3, 2))
-	if !a.Equals(NewHex(-2, -1, 3)) {
+	a := NewHex(1, -3, 2)
+	if !a.RotateLeft().Equals(NewHex(-2, -1, 3)) {
 		t.Error("hex_rotate_left")
 	}
 }
@@ -85,27 +85,33 @@ func TestHexRound(t *testing.T) {
 	a := NewFractionalHex(0.0, 0.0, 0.0)
 	b := NewFractionalHex(1.0, -1.0, 0.0)
 	c := NewFractionalHex(0.0, -1.0, 1.0)
-	equal_hex(t, "hex_round 1", NewHex(5, -10, 5), hex_round(hex_lerp(NewFractionalHex(0.0, 0.0, 0.0), NewFractionalHex(10.0, -20.0, 10.0), 0.5)))
-	equal_hex(t, "hex_round 2", hex_round(a), hex_round(hex_lerp(a, b, 0.499)))
-	equal_hex(t, "hex_round 3", hex_round(b), hex_round(hex_lerp(a, b, 0.501)))
-	equal_hex(t, "hex_round 4", hex_round(a), hex_round(NewFractionalHex(a.q*0.4+b.q*0.3+c.q*0.3, a.r*0.4+b.r*0.3+c.r*0.3, a.s*0.4+b.s*0.3+c.s*0.3)))
-	equal_hex(t, "hex_round 5", hex_round(c), hex_round(NewFractionalHex(a.q*0.3+b.q*0.3+c.q*0.4, a.r*0.3+b.r*0.3+c.r*0.4, a.s*0.3+b.s*0.3+c.s*0.4)))
+	equal_hex(t, "hex_round 1", NewHex(5, -10, 5), NewFractionalHex(0.0, 0.0, 0.0).Lerp(NewFractionalHex(10.0, -20.0, 10.0), 0.5).Round())
+	equal_hex(t, "hex_round 2", a.Round(), a.Lerp(b, 0.499).Round())
+	equal_hex(t, "hex_round 3", b.Round(), a.Lerp(b, 0.501).Round())
+	equal_hex(t, "hex_round 4", a.Round(), NewFractionalHex(a.q*0.4+b.q*0.3+c.q*0.3, a.r*0.4+b.r*0.3+c.r*0.3, a.s*0.4+b.s*0.3+c.s*0.3).Round())
+	equal_hex(t, "hex_round 5", c.Round(), NewFractionalHex(a.q*0.3+b.q*0.3+c.q*0.4, a.r*0.3+b.r*0.3+c.r*0.4, a.s*0.3+b.s*0.3+c.s*0.4).Round())
 }
 
 func TestHexLinedraw(t *testing.T) {
-	equal_hex_array(t, "hex_linedraw", []Hex{NewHex(0, 0, 0), NewHex(0, -1, 1), NewHex(0, -2, 2), NewHex(1, -3, 2), NewHex(1, -4, 3), NewHex(1, -5, 4)}, hex_linedraw(NewHex(0, 0, 0), NewHex(1, -5, 4)))
+	equal_hex_array(t, "hex_linedraw", []Hex{
+		NewHex(0, 0, 0),
+		NewHex(0, -1, 1),
+		NewHex(0, -2, 2),
+		NewHex(1, -3, 2),
+		NewHex(1, -4, 3),
+		NewHex(1, -5, 4)}, NewHex(0, 0, 0).LineDraw(NewHex(1, -5, 4)))
 }
 
 func TestLayout(t *testing.T) {
 	h := NewHex(3, 4, -7)
 
 	flat := NewLayout(layout_flat, NewPoint(10.0, 15.0), NewPoint(35.0, 71.0))
-	if !h.Equals(hex_round(pixel_to_hex(flat, hex_to_pixel(flat, h)))) {
+	if !h.Equals(flat.PixelToHex(flat.CenterPoint(h)).Round()) {
 		t.Error("layout")
 	}
 
 	pointy := NewLayout(layout_pointy, NewPoint(10.0, 15.0), NewPoint(35.0, 71.0))
-	if !h.Equals(hex_round(pixel_to_hex(pointy, hex_to_pixel(pointy, h)))) {
+	if !h.Equals(pointy.PixelToHex(pointy.CenterPoint(h)).Round()) {
 		t.Error("layout")
 	}
 }
