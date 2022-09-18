@@ -214,6 +214,7 @@ func TestDoubledToCube(t *testing.T) {
 
 ////////////////////////////////////////////////////
 // helper functions for testing
+////////////////////////////////////////////////////
 
 func equal_hex(t *testing.T, name string, a, b Hex) {
 	if !a.Equals(b) {
@@ -221,27 +222,13 @@ func equal_hex(t *testing.T, name string, a, b Hex) {
 	}
 }
 
-func equal_offsetcoord(t *testing.T, name string, a, b OffsetCoord) {
-	if !a.Equals(b) {
-		t.Error(name)
-	}
-}
-
-func equal_doubledcoord(t *testing.T, name string, a, b DoubledCoord) {
-	if !a.Equals(b) {
-		t.Error(name)
-	}
-}
-
-func equal_int(t *testing.T, name string, a, b int) {
-	if !(a == b) {
-		t.Error(name)
-	}
-}
-
 func equal_hex_array(t *testing.T, name string, a, b []Hex) {
-	equal_int(t, name, len(a), len(b))
-	for i := 0; i < len(a); i++ {
-		equal_hex(t, name, a[i], b[i])
+	if len(a) != len(b) {
+		t.Error(name)
+	}
+	for i := 0; i < len(a) && i < len(b); i++ {
+		if !a[i].Equals(b[i]) {
+			t.Error(name)
+		}
 	}
 }
