@@ -31,9 +31,9 @@ import (
 
 // polygon is the actual hex on the board
 type polygon struct {
-	x, y, radius float64
-	label        string
-	style        struct {
+	cx, cy, radius float64 // center of the hex
+	label          string
+	style          struct {
 		fill        string
 		stroke      string
 		strokeWidth string
@@ -41,9 +41,21 @@ type polygon struct {
 	points []point
 }
 
-func (p polygon) hexPoints() (points []point) {
+func (p polygon) hexPointyPoints() (points []point) {
 	for theta := 0.0; theta < math.Pi*2.0; theta += math.Pi / 3.0 {
-		points = append(points, point{x: p.x + p.radius*math.Sin(theta), y: p.y + p.radius*math.Cos(theta)})
+		points = append(points, point{x: p.cx + p.radius*math.Sin(theta), y: p.cy + p.radius*math.Cos(theta)})
+	}
+	return points
+}
+
+// function flat_hex_corner(center, size, i):
+//    var angle_deg = 60 * i
+//    var angle_rad = PI / 180 * angle_deg
+//    return Point(center.x + size * cos(angle_rad),
+//                 center.y + size * sin(angle_rad))
+func (p polygon) hexFlatPoints() (points []point) {
+	for theta := 0.0; theta < math.Pi*2.0; theta += math.Pi / 3.0 {
+		points = append(points, point{x: p.cx + p.radius*math.Cos(theta), y: p.cy + p.radius*math.Sin(theta)})
 	}
 	return points
 }
@@ -61,6 +73,6 @@ func (p polygon) String() string {
 		s += `"`
 	}
 	s += "></polygon>\n"
-	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="12">%s</text>`, p.x, p.y, p.label)
+	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="12">%s</text>`, p.cx, p.cy, p.label)
 	return s
 }

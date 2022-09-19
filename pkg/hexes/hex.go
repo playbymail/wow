@@ -45,6 +45,10 @@ func (h Hex) Add(b Hex) Hex {
 	return NewHex(h.q+b.q, h.r+b.r, h.s+b.s)
 }
 
+func (h Hex) Coords() (q, r, s int) {
+	return h.q, h.r, h.s
+}
+
 func (h Hex) DiagonalNeighbor(direction int) Hex {
 	// direction = mod(direction, 6)
 	direction = (6 + (direction % 6)) % 6

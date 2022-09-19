@@ -32,3 +32,7 @@ type Point struct {
 func NewPoint(x, y float64) Point {
 	return Point{x: x, y: y}
 }
+
+func (p Point) Coords() (x, y float64) {
+	return p.x, p.y
+}

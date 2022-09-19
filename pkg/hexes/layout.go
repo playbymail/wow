@@ -39,6 +39,16 @@ func NewLayout(orientation Orientation, size, origin Point) Layout {
 	return Layout{orientation: orientation, size: size, origin: origin}
 }
 
+// NewFlatLayout returns an initialized layout using flat hexes.
+func NewFlatLayout(size, origin Point) Layout {
+	return Layout{orientation: layout_flat, size: size, origin: origin}
+}
+
+// NewPointyLayout returns an initialized layout using pointy hexes
+func NewPointyLayout(size, origin Point) Layout {
+	return Layout{orientation: layout_pointy, size: size, origin: origin}
+}
+
 // CenterPoint returns the center point of the hex on the screen.
 func (l Layout) CenterPoint(h Hex) Point {
 	M := l.orientation
@@ -49,6 +59,21 @@ func (l Layout) CenterPoint(h Hex) Point {
 	y := (M.f2*float64(h.q) + M.f3*float64(h.r)) * size.y
 
 	return NewPoint(x+origin.x, y+origin.y)
+}
+
+// CoordToHex converts an x, y coordinate to a fractional hex on the map.
+func (l Layout) CoordToHex(x, y int) Hex {
+	p := NewPoint(float64(x), float64(y))
+	M := l.orientation
+	size := NewPoint(1.0, 1.0)
+	origin := l.origin
+
+	pt := NewPoint((p.x-origin.x)/size.x, (p.y-origin.y)/size.y)
+
+	q := M.b0*pt.x + M.b1*pt.y
+	r := M.b2*pt.x + M.b3*pt.y
+
+	return NewFractionalHex(q, r, -q-r).Round()
 }
 
 // HexCornerOffset returns the offset of a hex corner from the center of the hex.

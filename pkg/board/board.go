@@ -30,6 +30,8 @@ package board
 import (
 	"bytes"
 	"fmt"
+	"github.com/mdhender/wow/pkg/hexes"
+	"log"
 	"math"
 )
 
@@ -88,6 +90,10 @@ func (b *Board) AsHTML() []byte {
 	_, _ = fmt.Fprintln(buf, `<meta charset="utf-8">`)
 	_, _ = fmt.Fprintln(buf, `<title>SVG Test</title>`)
 	//_, _ = fmt.Fprintln(b, `<style>div.scroll {background-color: #fed9ff;width: 95%;height: 95%;overflow: auto;text-align: justify;padding: 1%;}</style>`)
+	_, _ = fmt.Fprintf(buf, `<style>`)
+	_, _ = fmt.Fprintf(buf, `svg{background-color:hsl(197, 18%%, 95%%);padding:50px 50px 50px 50px;}`)
+	//_, _ = fmt.Fprintf(buf, `rect{fill:red;stroke:none;shape-rendering:crispEdges;}`)
+	_, _ = fmt.Fprintf(buf, `</style>`)
 	_, _ = fmt.Fprintln(buf, `</head>`)
 	_, _ = fmt.Fprintln(buf, `<body>`)
 	//_, _ = fmt.Fprintln(b, `<div class="scroll">`)
@@ -100,12 +106,72 @@ func (b *Board) AsHTML() []byte {
 }
 
 func (b *Board) asSVG() *svg {
+	size := 50.0
+	width, height := 2*size, math.Sqrt(3)*size
+	layout := hexes.NewFlatLayout(hexes.NewPoint(size, size), hexes.NewPoint(height, width))
+
+	// svg has 0,0 in the upper left.
+	s := &svg{id: "s"}
+
+	// poly.style.fill = "hsl(39, 100%, 50%)" // "LightBlue" //"hsl(197, 78%, 85%)"
+
+	// the board has 0,0 in the lower left but svg has 0,0 in the upper left.
+	// we have to change y from [0..maxY] to [maxY..0].
+	// y = maxY - y
+
+	for row := 0; row < b.Rows; row++ {
+		for col := 0; col < b.Cols; col++ {
+			hex := b.Hexes[row][col]
+
+			// assumes flat with even-q layout
+			h := hexes.QOffsetToCube(col, row, hexes.EVEN)
+			qq, rr, ss := h.Coords()
+			log.Printf("col %4d  row %4d  q %4d  r %4d  s %4d\n", col, row, qq, rr, ss)
+
+			cx, cy := layout.CenterPoint(h).Coords()
+			poly := &polygon{cx: cx, cy: cy}
+
+			if hex.Name == "" {
+				// the board has 0,0 in the lower left but svg has 0,0 in the upper left.
+				// we have to change y from [0..maxY] to [maxY..0].
+				// y = maxY - y
+				poly.label = fmt.Sprintf("%02d%02d", hex.Coords.Col, hex.Coords.Row)
+			} else {
+				poly.label = fmt.Sprintf("%s (%d)", hex.Name, hex.EconValue)
+			}
+
+			poly.style.stroke = "Grey"
+			poly.style.fill = hex.Fill()
+			if poly.style.fill == poly.style.stroke {
+				poly.style.stroke = "Black"
+			}
+			poly.style.strokeWidth = "2px"
+
+			for _, p := range layout.PolygonCorners(h) {
+				px, py := p.Coords()
+				if width := int(px); width > s.viewBox.width {
+					s.viewBox.width = width
+				}
+				if height := int(py); height > s.viewBox.height {
+					s.viewBox.height = height
+				}
+				poly.points = append(poly.points, point{x: px, y: py})
+			}
+
+			s.polygons = append(s.polygons, poly)
+		}
+	}
+
+	return s
+}
+
+func (b *Board) asSVG2() *svg {
 	radius := 30.0 * 1.5 // mdhender: scaled for star names
 	offset := (math.Sqrt(3) * radius) / 2
 
-	// why 40.0 here?
-	maxX := 40.0 + offset*float64(b.Cols*2)
-	maxY := 40.0 + offset*float64(b.Rows)*math.Sqrt(3)
+	// why 40.0 here? it's the margin on the left side
+	maxX := 40.0*1.5 + offset*float64(b.Cols*2)
+	maxY := 40.0*1.5 + offset*float64(b.Rows)*math.Sqrt(3)
 
 	s := &svg{}
 	s.id = "s"
@@ -116,17 +182,17 @@ func (b *Board) asSVG() *svg {
 		for col := 0; col < b.Cols; col++ {
 			hex := b.Hexes[row][col]
 
-			x := 40.0 + offset*float64(hex.Coords.Col*2)
+			x := 40.0*1.5 + offset*float64(hex.Coords.Col*2)
 			if hex.Coords.Row%2 == 0 {
 				x += offset
 			}
-			y := 40.0 + offset*float64(hex.Coords.Row)*math.Sqrt(3)
+			y := 40.0*1.5 + offset*float64(hex.Coords.Row)*math.Sqrt(3)
 
 			// the board has 0,0 in the lower left but svg has 0,0 in the upper left.
 			// we have to change y from [0..maxY] to [maxY..0].
-			y = maxY - y
+			//y = maxY - y
 
-			poly := &polygon{x: x, y: y, radius: radius}
+			poly := &polygon{cx: x, cy: y, radius: radius}
 			if hex.Name == "" {
 				poly.label = fmt.Sprintf("%02d%02d", hex.Coords.Row, hex.Coords.Col)
 			} else {
@@ -139,7 +205,7 @@ func (b *Board) asSVG() *svg {
 				poly.style.stroke = "Black"
 			}
 			poly.style.strokeWidth = "2px"
-			for _, p := range poly.hexPoints() {
+			for _, p := range poly.hexPointyPoints() {
 				poly.points = append(poly.points, point{x: p.x, y: p.y})
 			}
 
@@ -154,14 +220,6 @@ type Board struct {
 	Rows, Cols int
 	Hexes      [][]*Hex
 	Stars      map[string]*Hex
-}
-
-type Hex struct {
-	Coords        Coords
-	Name          string
-	HasStar       bool
-	EconValue     int
-	WormHoleExits []*Hex
 }
 
 // AddWormHole adds a new exit to the hex.
