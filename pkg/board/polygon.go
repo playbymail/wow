@@ -73,6 +73,6 @@ func (p polygon) String() string {
 		s += `"`
 	}
 	s += "></polygon>\n"
-	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="12">%s</text>`, p.cx, p.cy, p.label)
+	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14">%s</text>`, p.cx, p.cy, p.label)
 	return s
 }
