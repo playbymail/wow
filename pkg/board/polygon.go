@@ -77,6 +77,9 @@ func (p polygon) String() string {
 	if p.addCircle {
 		s += fmt.Sprintf(`<circle cx="%f" cy="%f" r="%f" style="fill: none; stroke: %s; stroke-width: %s" />`, p.cx, p.cy, p.radius, p.style.stroke, p.style.strokeWidth) + "\n"
 	}
+	//// todo: put in a rounded rectangle behind the text
+	//rbHeight, rbWidth := p.radius, p.radius*1.8
+	//s += fmt.Sprintf(`<rect x="%f" y="%f" height="%f" width="%f" rx="%f" ry="%f" fill="white" />`, p.cx-rbWidth/2.0, p.cy-rbHeight/2.0, rbHeight, rbWidth, rbHeight/2.0, rbHeight/2.0)
 	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14">%s</text>`, p.cx, p.cy, p.label)
 	return s
 }
