@@ -109,7 +109,7 @@ func (b *Board) AsSVG(mono bool) []byte {
 }
 
 func (b *Board) asSVG(mono bool) *svg {
-	size := 50.0
+	size := 55.0
 	width, height := 2*size, math.Sqrt(3)*size
 	layout := hexes.NewFlatLayout(hexes.NewPoint(size, size), hexes.NewPoint(height, width))
 
@@ -171,6 +171,7 @@ func (b *Board) asSVG(mono bool) *svg {
 			poly := &polygon{cx: cx, cy: cy, radius: height / 2.0}
 
 			poly.label = fmt.Sprintf("%s (%d)", hex.Name, hex.EconValue)
+			poly.text = []string{hex.Name, fmt.Sprintf("( %d )", hex.EconValue)}
 			poly.addCircle = true
 
 			poly.style.stroke = "Grey"

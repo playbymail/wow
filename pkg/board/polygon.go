@@ -41,6 +41,7 @@ type polygon struct {
 	}
 	points    []point
 	addCircle bool
+	text      []string
 }
 
 func (p polygon) hexPointyPoints() (points []point) {

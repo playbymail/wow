@@ -41,6 +41,7 @@ type svg struct {
 }
 
 func (s svg) String() string {
+	fontSize := 14
 	t := "<svg"
 	if s.id != "" {
 		t += fmt.Sprintf(" id=%q", s.id)
@@ -62,7 +63,7 @@ func (s svg) String() string {
 		}
 		p += `"`
 		p += "></polygon>\n"
-		p += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14">%s</text>`, h.cx, h.cy, fmt.Sprintf("%02d%02d", h.col, h.row))
+		p += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14" font-weight="bold">%s</text>`, h.cx, h.cy, fmt.Sprintf("%02d%02d", h.col, h.row))
 		t += p
 	}
 	for _, l := range s.lines {
@@ -75,7 +76,15 @@ func (s svg) String() string {
 		//// todo: put in a rounded rectangle behind the text
 		//rbHeight, rbWidth := p.radius, p.radius*1.8
 		//s += fmt.Sprintf(`<rect x="%f" y="%f" height="%f" width="%f" rx="%f" ry="%f" fill="white" />`, p.cx-rbWidth/2.0, p.cy-rbHeight/2.0, rbHeight, rbWidth, rbHeight/2.0, rbHeight/2.0)
-		t += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="black" font-size="14">%s</text>`, p.cx, p.cy, p.label)
+		//t += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="black" font-size="%d" font-weight="bold">%s</text>`, p.cx, p.cy, fontSize, p.label)
+		yOffset := float64(fontSize) * 0.6
+		for i, text := range p.text {
+			if i == 0 {
+				t += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="black" font-size="%d" font-weight="bold">%s</text>`, p.cx, p.cy-yOffset, fontSize, text)
+			} else {
+				t += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="black" font-size="%d" font-weight="bold">%s</text>`, p.cx, p.cy+yOffset*3, fontSize+2, text)
+			}
+		}
 	}
 	return t + "\n</svg>"
 }
