@@ -80,7 +80,7 @@ func (b *Board) AddWormHole(sourceStar, targetStar string) {
 	to.AddWormHole(from)
 }
 
-func (b *Board) AsHTML() []byte {
+func (b *Board) AsHTML(mono bool) []byte {
 	// create the svg for the board
 	buf := &bytes.Buffer{}
 	_, _ = fmt.Fprintln(buf, `<!doctype html>`)
@@ -96,7 +96,7 @@ func (b *Board) AsHTML() []byte {
 	_, _ = fmt.Fprintln(buf, `</head>`)
 	_, _ = fmt.Fprintln(buf, `<body>`)
 	//_, _ = fmt.Fprintln(b, `<div class="scroll">`)
-	_, _ = fmt.Fprintln(buf, b.asSVG().String())
+	_, _ = fmt.Fprintln(buf, b.asSVG(mono).String())
 	//_, _ = fmt.Fprintln(b, `</div>`)
 	_, _ = fmt.Fprintln(buf, "</body>")
 	_, _ = fmt.Fprintln(buf, "</html>")
@@ -104,18 +104,22 @@ func (b *Board) AsHTML() []byte {
 	return buf.Bytes()
 }
 
-func (b *Board) AsSVG() []byte {
-	return []byte(b.asSVG().String())
+func (b *Board) AsSVG(mono bool) []byte {
+	return []byte(b.asSVG(mono).String())
 }
 
-func (b *Board) asSVG() *svg {
+func (b *Board) asSVG(mono bool) *svg {
 	size := 50.0
 	width, height := 2*size, math.Sqrt(3)*size
 	layout := hexes.NewFlatLayout(hexes.NewPoint(size, size), hexes.NewPoint(height, width))
 
 	// "hsl(39, 100%, 50%)" // "LightBlue" // "hsl(197, 78%, 85%)"
-	hexFill := "hsl(197, 78%, 85%)"
-	starFill := "hsl(53, 100%, 94%)"
+	var hexFill, starFill string
+	if mono {
+		hexFill, starFill = "none", "White"
+	} else {
+		hexFill, starFill = "hsl(197, 78%, 85%)", "hsl(53, 100%, 94%)"
+	}
 
 	// svg has 0,0 in the upper left.
 	s := &svg{id: "s"}

@@ -96,11 +96,14 @@ var cmdCreateMap = &cobra.Command{
 			}
 		}
 
+		mono := true
 		// save the board as an SVG file
-		cobra.CheckErr(ioutil.WriteFile("svg-test.svg", gb.AsSVG(), 0644))
+		cobra.CheckErr(ioutil.WriteFile("svg-mono-test.svg", gb.AsSVG(mono), 0644))
+		cobra.CheckErr(ioutil.WriteFile("svg-test.svg", gb.AsSVG(!mono), 0644))
 
 		// save the board as an HTML file
-		cobra.CheckErr(ioutil.WriteFile("svg-test.html", gb.AsHTML(), 0644))
+		cobra.CheckErr(ioutil.WriteFile("svg-mono-test.html", gb.AsHTML(mono), 0644))
+		cobra.CheckErr(ioutil.WriteFile("svg-test.html", gb.AsHTML(!mono), 0644))
 	},
 }
 
