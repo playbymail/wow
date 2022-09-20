@@ -121,7 +121,7 @@ func (b *Board) asSVG() *svg {
 			// qq, rr, ss := h.Coords()
 
 			cx, cy := layout.CenterPoint(h).Coords()
-			poly := &polygon{cx: cx, cy: cy}
+			poly := &polygon{cx: cx, cy: cy, radius: height / 2.0}
 
 			if hex.Name == "" {
 				// the board has 0,0 in the lower left but svg has 0,0 in the upper left.
@@ -130,6 +130,7 @@ func (b *Board) asSVG() *svg {
 				poly.label = fmt.Sprintf("%02d%02d", hex.Coords.Col, hex.Coords.Row)
 			} else {
 				poly.label = fmt.Sprintf("%s (%d)", hex.Name, hex.EconValue)
+				poly.addCircle = true
 			}
 
 			poly.style.stroke = "Grey"

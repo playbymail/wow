@@ -50,7 +50,7 @@ func (s svg) String() string {
 	}
 	for _, l := range s.lines {
 		x1, y1, x2, y2 := l[0], l[1], l[2], l[3]
-		t += fmt.Sprintf(`<line x1="%f" y1="%f" x2="%f" y2="%f" stroke-width="1" stroke="black"/>`, x1, y1, x2, y2)
+		t += fmt.Sprintf(`<line x1="%f" y1="%f" x2="%f" y2="%f" stroke-width="2" stroke="black"/>`, x1, y1, x2, y2)
 	}
 	return t + "\n</svg>"
 }

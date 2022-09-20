@@ -38,7 +38,8 @@ type polygon struct {
 		stroke      string
 		strokeWidth string
 	}
-	points []point
+	points    []point
+	addCircle bool
 }
 
 func (p polygon) hexPointyPoints() (points []point) {
@@ -73,6 +74,9 @@ func (p polygon) String() string {
 		s += `"`
 	}
 	s += "></polygon>\n"
+	if p.addCircle {
+		s += fmt.Sprintf(`<circle cx="%f" cy="%f" r="%f" style="fill: none; stroke: %s; stroke-width: %s" />`, p.cx, p.cy, p.radius, p.style.stroke, p.style.strokeWidth) + "\n"
+	}
 	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14">%s</text>`, p.cx, p.cy, p.label)
 	return s
 }
