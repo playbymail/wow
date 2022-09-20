@@ -104,6 +104,10 @@ func (b *Board) AsHTML() []byte {
 	return buf.Bytes()
 }
 
+func (b *Board) AsSVG() []byte {
+	return []byte(b.asSVG().String())
+}
+
 func (b *Board) asSVG() *svg {
 	size := 50.0
 	width, height := 2*size, math.Sqrt(3)*size

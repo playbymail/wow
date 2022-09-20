@@ -96,6 +96,9 @@ var cmdCreateMap = &cobra.Command{
 			}
 		}
 
+		// save the board as an SVG file
+		cobra.CheckErr(ioutil.WriteFile("svg-test.svg", gb.AsSVG(), 0644))
+
 		// save the board as an HTML file
 		cobra.CheckErr(ioutil.WriteFile("svg-test.html", gb.AsHTML(), 0644))
 	},
