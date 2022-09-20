@@ -63,7 +63,7 @@ func (s svg) String() string {
 		}
 		p += `"`
 		p += "></polygon>\n"
-		p += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14" font-weight="bold">%s</text>`, h.cx, h.cy, fmt.Sprintf("%02d%02d", h.col, h.row))
+		p += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="%d" font-weight="bold">%s</text>`, h.cx, h.cy, fontSize, fmt.Sprintf("%02d%02d", h.col, h.row))
 		t += p
 	}
 	for _, l := range s.lines {
@@ -71,12 +71,8 @@ func (s svg) String() string {
 		t += fmt.Sprintf(`<line x1="%f" y1="%f" x2="%f" y2="%f" stroke-width="2" stroke="black"/>`, x1, y1, x2, y2)
 	}
 	for _, p := range s.polygons {
-		ps := fmt.Sprintf(`<circle cx="%f" cy="%f" r="%f" style="fill: %s; stroke: %s; stroke-width: %s" />`, p.cx, p.cy, p.radius*0.88, p.style.fill, p.style.stroke, p.style.strokeWidth) + "\n"
-		t += ps
-		//// todo: put in a rounded rectangle behind the text
-		//rbHeight, rbWidth := p.radius, p.radius*1.8
-		//s += fmt.Sprintf(`<rect x="%f" y="%f" height="%f" width="%f" rx="%f" ry="%f" fill="white" />`, p.cx-rbWidth/2.0, p.cy-rbHeight/2.0, rbHeight, rbWidth, rbHeight/2.0, rbHeight/2.0)
-		//t += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="black" font-size="%d" font-weight="bold">%s</text>`, p.cx, p.cy, fontSize, p.label)
+		t += fmt.Sprintf(`<circle cx="%f" cy="%f" r="%f" style="fill: %s; stroke: %s; stroke-width: %s" />`, p.cx, p.cy, p.radius*0.88, p.style.fill, p.style.stroke, p.style.strokeWidth) + "\n"
+
 		yOffset := float64(fontSize) * 0.6
 		for i, text := range p.text {
 			if i == 0 {

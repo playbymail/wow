@@ -25,7 +25,6 @@
 package board
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -33,7 +32,6 @@ import (
 type polygon struct {
 	col, row       int     // coordinates of the hex
 	cx, cy, radius float64 // center of the hex
-	label          string
 	style          struct {
 		fill        string
 		stroke      string
@@ -61,45 +59,4 @@ func (p polygon) hexFlatPoints() (points []point) {
 		points = append(points, point{x: p.cx + p.radius*math.Cos(theta), y: p.cy + p.radius*math.Sin(theta)})
 	}
 	return points
-}
-
-func (p polygon) String() string {
-	s := fmt.Sprintf(`<polygon style="fill: %s; stroke: %s; stroke-width: %s;"`, p.style.fill, p.style.stroke, p.style.strokeWidth)
-	if len(p.points) != 0 {
-		s += fmt.Sprintf(` points="`)
-		for i, pt := range p.points {
-			if i != 0 {
-				s += " "
-			}
-			s += pt.String()
-		}
-		s += `"`
-	}
-	s += "></polygon>\n"
-	if p.addCircle {
-		s += fmt.Sprintf(`<circle cx="%f" cy="%f" r="%f" style="fill: none; stroke: %s; stroke-width: %s" />`, p.cx, p.cy, p.radius, p.style.stroke, p.style.strokeWidth) + "\n"
-	}
-	//// todo: put in a rounded rectangle behind the text
-	//rbHeight, rbWidth := p.radius, p.radius*1.8
-	//s += fmt.Sprintf(`<rect x="%f" y="%f" height="%f" width="%f" rx="%f" ry="%f" fill="white" />`, p.cx-rbWidth/2.0, p.cy-rbHeight/2.0, rbHeight, rbWidth, rbHeight/2.0, rbHeight/2.0)
-	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14">%s</text>`, p.cx, p.cy, p.label)
-	return s
-}
-
-func (p polygon) Hex() string {
-	if len(p.points) == 0 {
-		return ""
-	}
-	s := fmt.Sprintf(`<polygon style="fill: %s; stroke: %s; stroke-width: %s;"`, p.style.fill, p.style.stroke, p.style.strokeWidth)
-	s += fmt.Sprintf(` points="`)
-	for i, pt := range p.points {
-		if i != 0 {
-			s += " "
-		}
-		s += pt.String()
-	}
-	s += `"`
-	s += "></polygon>\n"
-	s += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14">%s</text>`, p.cx, p.cy, fmt.Sprintf("%02d%02d", p.col, p.row))
-	return s
 }

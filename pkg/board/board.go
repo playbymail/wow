@@ -170,7 +170,6 @@ func (b *Board) asSVG(mono bool) *svg {
 			cx, cy := layout.CenterPoint(h).Coords()
 			poly := &polygon{cx: cx, cy: cy, radius: height / 2.0}
 
-			poly.label = fmt.Sprintf("%s (%d)", hex.Name, hex.EconValue)
 			poly.text = []string{hex.Name, fmt.Sprintf("( %d )", hex.EconValue)}
 			poly.addCircle = true
 
