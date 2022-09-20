@@ -24,7 +24,9 @@
 
 package board
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // svg is the container for our board
 type svg struct {
@@ -33,6 +35,7 @@ type svg struct {
 		minX, minY    int
 		width, height int
 	}
+	hexes    []*polygon
 	polygons []*polygon
 	lines    [][4]float64
 }
@@ -45,12 +48,34 @@ func (s svg) String() string {
 	t += fmt.Sprintf(` width="%d" height="%d"`, s.viewBox.width+40, s.viewBox.height+40)
 	t += fmt.Sprintf(` viewBox="%d %d %d %d"`, s.viewBox.minX, s.viewBox.minY, s.viewBox.width+40, s.viewBox.height+40)
 	t += ` xmlns="http://www.w3.org/2000/svg">`
-	for _, p := range s.polygons {
-		t += fmt.Sprintf("\n%s", p.String())
+	for _, h := range s.hexes {
+		if len(h.points) == 0 {
+			continue
+		}
+		p := fmt.Sprintf(`<polygon style="fill: %s; stroke: %s; stroke-width: %s;"`, h.style.fill, h.style.stroke, h.style.strokeWidth)
+		p += fmt.Sprintf(` points="`)
+		for i, pt := range h.points {
+			if i > 0 {
+				p += " "
+			}
+			p += pt.String()
+		}
+		p += `"`
+		p += "></polygon>\n"
+		p += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="grey" font-size="14">%s</text>`, h.cx, h.cy, fmt.Sprintf("%02d%02d", h.col, h.row))
+		t += p
 	}
 	for _, l := range s.lines {
 		x1, y1, x2, y2 := l[0], l[1], l[2], l[3]
 		t += fmt.Sprintf(`<line x1="%f" y1="%f" x2="%f" y2="%f" stroke-width="2" stroke="black"/>`, x1, y1, x2, y2)
+	}
+	for _, p := range s.polygons {
+		ps := fmt.Sprintf(`<circle cx="%f" cy="%f" r="%f" style="fill: %s; stroke: %s; stroke-width: %s" />`, p.cx, p.cy, p.radius*0.88, p.style.fill, p.style.stroke, p.style.strokeWidth) + "\n"
+		t += ps
+		//// todo: put in a rounded rectangle behind the text
+		//rbHeight, rbWidth := p.radius, p.radius*1.8
+		//s += fmt.Sprintf(`<rect x="%f" y="%f" height="%f" width="%f" rx="%f" ry="%f" fill="white" />`, p.cx-rbWidth/2.0, p.cy-rbHeight/2.0, rbHeight, rbWidth, rbHeight/2.0, rbHeight/2.0)
+		t += fmt.Sprintf(`<text x="%f" y="%f" text-anchor="middle" fill="black" font-size="14">%s</text>`, p.cx, p.cy, p.label)
 	}
 	return t + "\n</svg>"
 }

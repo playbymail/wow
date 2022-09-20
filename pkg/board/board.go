@@ -113,12 +113,51 @@ func (b *Board) asSVG() *svg {
 	width, height := 2*size, math.Sqrt(3)*size
 	layout := hexes.NewFlatLayout(hexes.NewPoint(size, size), hexes.NewPoint(height, width))
 
+	// "hsl(39, 100%, 50%)" // "LightBlue" // "hsl(197, 78%, 85%)"
+	hexFill := "hsl(197, 78%, 85%)"
+	starFill := "hsl(53, 100%, 94%)"
+
 	// svg has 0,0 in the upper left.
 	s := &svg{id: "s"}
 
+	// create the hexes
+	for row := 0; row < b.Rows; row++ {
+		for col := 0; col < b.Cols; col++ {
+			// assumes flat with even-q layout
+			h := hexes.QOffsetToCube(col, row, hexes.EVEN)
+
+			cx, cy := layout.CenterPoint(h).Coords()
+			poly := &polygon{col: col, row: row, cx: cx, cy: cy, radius: height / 2.0}
+
+			poly.style.stroke = "Grey"
+			poly.style.fill = hexFill
+			if poly.style.fill == poly.style.stroke {
+				poly.style.stroke = "Black"
+			}
+			poly.style.strokeWidth = "2px"
+
+			for _, p := range layout.PolygonCorners(h) {
+				px, py := p.Coords()
+				if width := int(px); width > s.viewBox.width {
+					s.viewBox.width = width
+				}
+				if height := int(py); height > s.viewBox.height {
+					s.viewBox.height = height
+				}
+				poly.points = append(poly.points, point{x: px, y: py})
+			}
+
+			s.hexes = append(s.hexes, poly)
+		}
+	}
+
+	// create the stars
 	for row := 0; row < b.Rows; row++ {
 		for col := 0; col < b.Cols; col++ {
 			hex := b.Hexes[row][col]
+			if hex.Name == "" {
+				continue // not a star
+			}
 
 			// assumes flat with even-q layout
 			h := hexes.QOffsetToCube(col, row, hexes.EVEN)
@@ -127,18 +166,11 @@ func (b *Board) asSVG() *svg {
 			cx, cy := layout.CenterPoint(h).Coords()
 			poly := &polygon{cx: cx, cy: cy, radius: height / 2.0}
 
-			if hex.Name == "" {
-				// the board has 0,0 in the lower left but svg has 0,0 in the upper left.
-				// we have to change y from [0..maxY] to [maxY..0].
-				// y = maxY - y
-				poly.label = fmt.Sprintf("%02d%02d", hex.Coords.Col, hex.Coords.Row)
-			} else {
-				poly.label = fmt.Sprintf("%s (%d)", hex.Name, hex.EconValue)
-				poly.addCircle = true
-			}
+			poly.label = fmt.Sprintf("%s (%d)", hex.Name, hex.EconValue)
+			poly.addCircle = true
 
 			poly.style.stroke = "Grey"
-			poly.style.fill = hex.Fill() // "hsl(39, 100%, 50%)" // "LightBlue" // "hsl(197, 78%, 85%)"
+			poly.style.fill = starFill
 			if poly.style.fill == poly.style.stroke {
 				poly.style.stroke = "Black"
 			}
