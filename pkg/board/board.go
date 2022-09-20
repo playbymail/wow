@@ -31,7 +31,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/mdhender/wow/pkg/hexes"
-	"log"
 	"math"
 )
 
@@ -113,20 +112,13 @@ func (b *Board) asSVG() *svg {
 	// svg has 0,0 in the upper left.
 	s := &svg{id: "s"}
 
-	// poly.style.fill = "hsl(39, 100%, 50%)" // "LightBlue" //"hsl(197, 78%, 85%)"
-
-	// the board has 0,0 in the lower left but svg has 0,0 in the upper left.
-	// we have to change y from [0..maxY] to [maxY..0].
-	// y = maxY - y
-
 	for row := 0; row < b.Rows; row++ {
 		for col := 0; col < b.Cols; col++ {
 			hex := b.Hexes[row][col]
 
 			// assumes flat with even-q layout
 			h := hexes.QOffsetToCube(col, row, hexes.EVEN)
-			qq, rr, ss := h.Coords()
-			log.Printf("col %4d  row %4d  q %4d  r %4d  s %4d\n", col, row, qq, rr, ss)
+			// qq, rr, ss := h.Coords()
 
 			cx, cy := layout.CenterPoint(h).Coords()
 			poly := &polygon{cx: cx, cy: cy}
@@ -141,7 +133,7 @@ func (b *Board) asSVG() *svg {
 			}
 
 			poly.style.stroke = "Grey"
-			poly.style.fill = hex.Fill()
+			poly.style.fill = hex.Fill() // "hsl(39, 100%, 50%)" // "LightBlue" // "hsl(197, 78%, 85%)"
 			if poly.style.fill == poly.style.stroke {
 				poly.style.stroke = "Black"
 			}
@@ -159,57 +151,11 @@ func (b *Board) asSVG() *svg {
 			}
 
 			s.polygons = append(s.polygons, poly)
-		}
-	}
 
-	return s
-}
-
-func (b *Board) asSVG2() *svg {
-	radius := 30.0 * 1.5 // mdhender: scaled for star names
-	offset := (math.Sqrt(3) * radius) / 2
-
-	// why 40.0 here? it's the margin on the left side
-	maxX := 40.0*1.5 + offset*float64(b.Cols*2)
-	maxY := 40.0*1.5 + offset*float64(b.Rows)*math.Sqrt(3)
-
-	s := &svg{}
-	s.id = "s"
-	s.viewBox.minX, s.viewBox.width = 0, int(maxX+radius/2)
-	s.viewBox.minY, s.viewBox.height = 0, int(maxY+radius/2)
-
-	for row := 0; row < b.Rows; row++ {
-		for col := 0; col < b.Cols; col++ {
-			hex := b.Hexes[row][col]
-
-			x := 40.0*1.5 + offset*float64(hex.Coords.Col*2)
-			if hex.Coords.Row%2 == 0 {
-				x += offset
+			for _, star := range hex.WormHoleExits {
+				sx, sy := layout.CenterPoint(hexes.QOffsetToCube(star.Coords.Col, star.Coords.Row, hexes.EVEN)).Coords()
+				s.lines = append(s.lines, [4]float64{cx, cy, sx, sy})
 			}
-			y := 40.0*1.5 + offset*float64(hex.Coords.Row)*math.Sqrt(3)
-
-			// the board has 0,0 in the lower left but svg has 0,0 in the upper left.
-			// we have to change y from [0..maxY] to [maxY..0].
-			//y = maxY - y
-
-			poly := &polygon{cx: x, cy: y, radius: radius}
-			if hex.Name == "" {
-				poly.label = fmt.Sprintf("%02d%02d", hex.Coords.Row, hex.Coords.Col)
-			} else {
-				poly.label = fmt.Sprintf("%s (%d)", hex.Name, hex.EconValue)
-			}
-			poly.style.fill = hex.Fill()
-			poly.style.stroke = "LightGrey"
-			poly.style.stroke = "Grey"
-			if poly.style.fill == poly.style.stroke {
-				poly.style.stroke = "Black"
-			}
-			poly.style.strokeWidth = "2px"
-			for _, p := range poly.hexPointyPoints() {
-				poly.points = append(poly.points, point{x: p.x, y: p.y})
-			}
-
-			s.polygons = append(s.polygons, poly)
 		}
 	}
 

@@ -34,6 +34,7 @@ type svg struct {
 		width, height int
 	}
 	polygons []*polygon
+	lines    [][4]float64
 }
 
 func (s svg) String() string {
@@ -46,6 +47,10 @@ func (s svg) String() string {
 	t += ` xmlns="http://www.w3.org/2000/svg">`
 	for _, p := range s.polygons {
 		t += fmt.Sprintf("\n%s", p.String())
+	}
+	for _, l := range s.lines {
+		x1, y1, x2, y2 := l[0], l[1], l[2], l[3]
+		t += fmt.Sprintf(`<line x1="%f" y1="%f" x2="%f" y2="%f" stroke-width="1" stroke="black"/>`, x1, y1, x2, y2)
 	}
 	return t + "\n</svg>"
 }
