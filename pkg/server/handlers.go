@@ -25,13 +25,45 @@
 package server
 
 import (
+	"log"
 	"net/http"
+	"strings"
 )
 
-// Routes creates a new http.ServeMux and adds all the routes used by the server.
-// It returns a mux which may be used directly.
-func (s *Server) Routes() *http.ServeMux {
-	s.router = &http.ServeMux{}
-	s.router.HandleFunc("/api/map-data", s.handlePostMapData())
-	return s.router
+// handlePostMapData accepts map data as CSV.
+func (s *Server) handlePostMapData() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.URL.Path)
+		if r.Method != "POST" {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+
+		var contentType string
+		for _, field := range strings.Fields(r.Header.Get("Content-type")) {
+			if field == "multipart/form-data;" || field == "multipart/form-data" {
+				contentType = "multipart/form-data"
+			}
+		}
+		log.Println("contentType", contentType)
+		switch contentType {
+		case "form-data":
+			if err := r.ParseForm(); err != nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+		case "multipart/form-data":
+			if err := r.ParseMultipartForm(64 * 1024); err != nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+		default:
+			http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
+			return
+		}
+
+		for key, value := range r.Form {
+			log.Println(key, value)
+		}
+	}
 }
