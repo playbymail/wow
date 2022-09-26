@@ -34,7 +34,7 @@ import (
 	"time"
 )
 
-// StartServer runs a server.
+// StartServer is an example of how to start a server.
 // It is safe to run from a go routine.
 func StartServer(server *http.Server) {
 	log.Println("application started")
@@ -46,6 +46,7 @@ func StartServer(server *http.Server) {
 }
 
 // ShutdownServer gracefully stops a running server.
+//
 // Timeout should be a duration like `5*time.Second`.
 func ShutdownServer(c context.Context, server *http.Server, timeout time.Duration) {
 	ctx, cancel := context.WithTimeout(c, timeout)
@@ -58,8 +59,10 @@ func ShutdownServer(c context.Context, server *http.Server, timeout time.Duratio
 	log.Println("application has shut down")
 }
 
-// CreateChannel returns channels for catching signals.
-// (sort of like trap?)
+// CreateChannel creates and returns a channel for catching
+// SIGTERM and SIGINT signals.
+//
+// User must call the returned function to close the channel.
 func CreateChannel() (chan os.Signal, func()) {
 	stopCh := make(chan os.Signal, 1)
 	signal.Notify(stopCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)

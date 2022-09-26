@@ -50,6 +50,8 @@ var cmdServer = &cobra.Command{
 
 		// server assumes that it is exposed to the internet.
 		// it sets timeouts to avoid simple DOS attacks.
+		// this may not be needed (or desired) if the server
+		// hides behind a proxy like nginx.
 		srv := &http.Server{
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
@@ -69,6 +71,8 @@ var cmdServer = &cobra.Command{
 		}(srv)
 
 		// create the signal catchers, then wait on a signal.
+		// the catchers don't need to know about the server;
+		// they are only interested in trapping the signals.
 		stopCh, closeCh := june.CreateChannel()
 		defer closeCh()
 		log.Println("[server] notified:", <-stopCh)
