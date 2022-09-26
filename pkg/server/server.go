@@ -26,13 +26,12 @@
 package server
 
 import (
-	"github.com/mdhender/wow/internal/way"
 	"net/http"
 )
 
 // Server is our server data.
 type Server struct {
-	router *way.Router
+	router *http.ServeMux
 }
 
 // New returns an initialized server.

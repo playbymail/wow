@@ -25,20 +25,24 @@
 package server
 
 import (
-	"github.com/mdhender/wow/internal/way"
 	"log"
 	"net/http"
 )
 
-func (s *Server) Routes() http.Handler {
-	s.router = way.NewRouter()
-	s.router.HandleFunc("POST", "/api/map-data", s.handlePostMapData())
+// Routes creates a new http.ServeMux and adds all
+// the routes used by the server. It returns the mux.
+// Users may use the mux directly, or the server itself
+// since both implement the http.Handler interface.
+func (s *Server) Routes() *http.ServeMux {
+	s.router = &http.ServeMux{}
+	s.router.HandleFunc("/api/map-data", s.handlePostMapData())
 	return s.router
 }
 
 // handlePostMapData accepts map data as CSV.
 func (s *Server) handlePostMapData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.URL.Path)
 		if r.Method != "POST" {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
