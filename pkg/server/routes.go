@@ -22,38 +22,37 @@
  * SOFTWARE.
  */
 
-// Package main implements the engine for wars of warp.
-package main
+package server
 
 import (
-	"github.com/mdhender/wow/cli"
+	"github.com/mdhender/wow/internal/way"
 	"log"
-	"os"
-	"time"
+	"net/http"
 )
 
-func main() {
-	// default log format to UTC
-	log.SetFlags(log.Ldate | log.Ltime | log.LUTC)
-	//log.SetFlags(log.Lshortfile)
-
-	defer func(started time.Time) {
-		elapsed := time.Now().Sub(started)
-		log.Printf("wow: total time %v\n", elapsed)
-	}(time.Now())
-
-	// print working directory
-	if cwd, err := os.Getwd(); err != nil {
-		log.Fatal(err)
-	} else {
-		log.Printf("wow: running in %s\n", cwd)
-	}
-
-	if err := run(); err != nil {
-		log.Fatal(err)
-	}
+func (s *Server) Routes() http.Handler {
+	s.router = way.NewRouter()
+	s.router.HandleFunc("POST", "/api/map-data", s.handlePostMapData())
+	return s.router
 }
 
-func run() error {
-	return cli.Execute()
+// handlePostMapData accepts map data as CSV.
+func (s *Server) handlePostMapData() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		} else if err := r.ParseForm(); err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		//switch r.Header.Get("Content-type") {
+		//case "":
+		//}
+
+		for key, value := range r.Form {
+			log.Println(key, value)
+		}
+	}
 }

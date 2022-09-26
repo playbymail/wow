@@ -22,38 +22,26 @@
  * SOFTWARE.
  */
 
-// Package main implements the engine for wars of warp.
-package main
+// Package server implements an HTTP server
+package server
 
 import (
-	"github.com/mdhender/wow/cli"
-	"log"
-	"os"
-	"time"
+	"github.com/mdhender/wow/internal/way"
+	"net/http"
 )
 
-func main() {
-	// default log format to UTC
-	log.SetFlags(log.Ldate | log.Ltime | log.LUTC)
-	//log.SetFlags(log.Lshortfile)
-
-	defer func(started time.Time) {
-		elapsed := time.Now().Sub(started)
-		log.Printf("wow: total time %v\n", elapsed)
-	}(time.Now())
-
-	// print working directory
-	if cwd, err := os.Getwd(); err != nil {
-		log.Fatal(err)
-	} else {
-		log.Printf("wow: running in %s\n", cwd)
-	}
-
-	if err := run(); err != nil {
-		log.Fatal(err)
-	}
+// Server is our server data.
+type Server struct {
+	router *way.Router
 }
 
-func run() error {
-	return cli.Execute()
+// New returns an initialized server.
+func New() (*Server, error) {
+	return &Server{}, nil
+}
+
+// ServeHTTP implements the http.Handler interface.
+// This is intended to support testing, but there's no harm in calling it directly.
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
 }
