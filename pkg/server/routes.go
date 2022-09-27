@@ -25,13 +25,14 @@
 package server
 
 import (
+	"github.com/mdhender/wow/internal/way"
 	"net/http"
 )
 
 // Routes creates a new http.ServeMux and adds all the routes used by the server.
 // It returns a mux which may be used directly.
-func (s *Server) Routes() *http.ServeMux {
-	s.router = &http.ServeMux{}
-	s.router.HandleFunc("/api/map-data", s.handlePostMapData())
+func (s *Server) Routes() http.Handler {
+	s.router = way.NewRouter()
+	s.router.HandleFunc("POST", "/api/map-data", s.handlePostMapData(true))
 	return s.router
 }
