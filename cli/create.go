@@ -27,7 +27,7 @@ package cli
 import (
 	"github.com/mdhender/wow/pkg/board"
 	"github.com/spf13/cobra"
-	"io/ioutil"
+	"os"
 )
 
 // cmdCreateMap creates a map
@@ -98,12 +98,12 @@ var cmdCreateMap = &cobra.Command{
 
 		mono := true
 		// save the board as an SVG file
-		cobra.CheckErr(ioutil.WriteFile("svg-mono-test.svg", gb.AsSVG(mono), 0644))
-		cobra.CheckErr(ioutil.WriteFile("svg-test.svg", gb.AsSVG(!mono), 0644))
+		cobra.CheckErr(os.WriteFile("svg-mono-test.svg", gb.AsSVG(mono), 0644))
+		cobra.CheckErr(os.WriteFile("svg-test.svg", gb.AsSVG(!mono), 0644))
 
 		// save the board as an HTML file
-		cobra.CheckErr(ioutil.WriteFile("svg-mono-test.html", gb.AsHTML(mono), 0644))
-		cobra.CheckErr(ioutil.WriteFile("svg-test.html", gb.AsHTML(!mono), 0644))
+		cobra.CheckErr(os.WriteFile("svg-mono-test.html", gb.AsHTML(mono), 0644))
+		cobra.CheckErr(os.WriteFile("svg-test.html", gb.AsHTML(!mono), 0644))
 	},
 }
 
