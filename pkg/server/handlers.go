@@ -25,108 +25,197 @@
 package server
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/mdhender/wow/pkg/board"
-	"log"
+	"io"
 	"net/http"
-	"strings"
+	"unicode/utf8"
 )
 
 // handlePostMapData accepts map data as CSV and returns an SVG or an error page.
-func (s *Server) handlePostMapData(mono bool) http.HandlerFunc {
+func (s *Server) handlePostMapData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.URL.Path)
-
-		var contentType string
-		for _, field := range strings.Fields(r.Header.Get("Content-type")) {
-			if field == "multipart/form-data;" || field == "multipart/form-data" {
-				contentType = "multipart/form-data"
-			}
+		type errorObject struct {
+			Code   int    `json:"code,omitempty"`
+			Detail string `json:"detail,omitempty"`
 		}
-		log.Println("contentType", contentType)
+		type errResponse struct {
+			Status string        `json:"status"`
+			Errors []errorObject `json:"errors,omitempty"`
+		}
+		type okResponse struct {
+			Status string      `json:"status"`
+			Data   interface{} `json:"data"`
+		}
+
+		type node struct {
+			Name      string   `json:"name"`
+			Col       int      `json:"col"`
+			Row       int      `json:"row"`
+			EconValue int      `json:"econ-value"` // non-zero only if hasStar
+			Warps     []string `json:"warps"`
+		}
+
+		var input struct {
+			Mono  bool   `json:"mono,omitempty"`
+			Nodes []node `json:"nodes,omitempty"`
+		}
+
+		contentType := r.Header.Get("Content-type")
 		switch contentType {
-		case "form-data":
+		case "application/json":
+			// enforce a maximum read of 10kb from the response body
+			r.Body = http.MaxBytesReader(w, r.Body, 10*1024)
+			// create a json decoder that will accept only our specific fields
+			dec := json.NewDecoder(r.Body)
+			dec.DisallowUnknownFields()
+			if err := dec.Decode(&input); err != nil {
+				response := errResponse{
+					Status: "error",
+					Errors: []errorObject{{
+						Code:   http.StatusBadRequest,
+						Detail: "invalid json object",
+					}},
+				}
+				w.Header().Set("Content-Type", "application/vnd.api+json")
+				w.WriteHeader(http.StatusOK)
+				_ = json.NewEncoder(w).Encode(response)
+				return
+			}
+			// call decode again to confirm that the request contained only a single JSON object
+			if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+				response := errResponse{
+					Status: "error",
+					Errors: []errorObject{{
+						Code:   http.StatusBadRequest,
+						Detail: "request body must only contain a single json object",
+					}},
+				}
+				w.Header().Set("Content-Type", "application/vnd.api+json")
+				w.WriteHeader(http.StatusOK)
+				_ = json.NewEncoder(w).Encode(response)
+				return
+			}
+		case "application/x-www-form-urlencoded":
 			if err := r.ParseForm(); err != nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
 			}
-		case "multipart/form-data":
-			if err := r.ParseMultipartForm(64 * 1024); err != nil {
+			for k, v := range r.Form {
+				switch k {
+				case "mono":
+					if len(v) != 1 || !utf8.ValidString(v[0]) {
+						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+						return
+					}
+					input.Mono = v[0] == "true"
+				}
+			}
+		case "text/html":
+			if err := r.ParseForm(); err != nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
+			}
+			for k, v := range r.Form {
+				switch k {
+				case "mono":
+					if len(v) != 1 || !utf8.ValidString(v[0]) {
+						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+						return
+					}
+					input.Mono = v[0] == "true"
+				}
 			}
 		default:
 			http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 			return
 		}
 
-		for key, value := range r.Form {
-			log.Println(key, value)
-		}
-
-		type hex struct {
-			name      string
-			col, row  int
-			econValue int // non-zero only if hasStar
-			warps     []string
-		}
-
-		// hexes is an untested guess as to the layout of the original map
-		hexes := []hex{
-			{"Adab", 6, 6, 0, []string{"Erech", "Khafa", "Byblos"}},
-			{"Akkad", 7, 16, 3, []string{"Kish"}},
-			{"Assur", 12, 10, 2, []string{"Nippur", "Lagash"}},
-			{"Babylon", 6, 18, 4, []string{"Sumer"}},
-			{"Byblos", 2, 6, 3, []string{"Adab"}},
-			{"Calah", 8, 4, 1, []string{"Nippur"}},
-			{"Elam", 7, 12, 5, []string{"Lagash"}},
-			{"Erech", 4, 4, 3, []string{"Ur", "Adab"}},
-			{"Eridu", 12, 16, 1, []string{"Kish", "Ugarit"}},
-			{"Girsu", 8, 13, 1, []string{"Umma"}},
-			{"Jarmo", 11, 12, 3, []string{"Kish"}},
-			{"Isin", 1, 15, 1, []string{"Nineveh"}},
-			{"Khafa", 7, 9, 2, []string{"Adab"}},
-			{"Kish", 10, 15, 0, []string{"Jarmo", "Eridu"}},
-			{"Lagash", 9, 11, 1, []string{"Assur"}},
-			{"Larsu", 11, 2, 2, []string{"Susa"}},
-			{"Mari", 6, 10, 1, []string{"Ubaid", "Umma"}},
-			{"Mosul", 3, 1, 2, []string{"Sippur"}},
-			{"Nineveh", 3, 19, 2, []string{"Isin"}},
-			{"Nippur", 10, 7, 1, []string{"Calah", "Susa", "Assur", "Lagash"}},
-			{"Sippur", 2, 4, 1, []string{"Mosul"}},
-			{"Sumarra", 2, 12, 2, []string{"Ubaid", "Umma"}},
-			{"Sumer", 4, 16, 0, []string{"Umma", "Babylon"}},
-			{"Susa", 12, 5, 0, []string{"Larsu", "Nippur"}},
-			{"Ubaid", 3, 8, 5, []string{"Mari", "Sumarra"}},
-			{"Ugarit", 11, 20, 2, []string{"Eridu"}},
-			{"Umma", 5, 14, 2, []string{"Sumarra", "Mari", "Girsu", "Sumer"}},
-			{"Ur", 7, 2, 4, []string{"Erech"}},
+		if len(input.Nodes) == 0 {
+			response := errResponse{
+				Status: "error",
+				Errors: []errorObject{{
+					Code:   http.StatusBadRequest,
+					Detail: "missing map data",
+				}},
+			}
+			w.Header().Set("Content-Type", "application/vnd.api+json")
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(response)
+			return
+		} else if len(input.Nodes) > 40 {
+			response := errResponse{
+				Status: "error",
+				Errors: []errorObject{{
+					Code:   http.StatusBadRequest,
+					Detail: "maximum number of nodes is 40",
+				}},
+			}
+			w.Header().Set("Content-Type", "application/vnd.api+json")
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(response)
+			return
 		}
 
 		// max row and col determine the size of the board
-		maxRow, maxCol := 0, 0
-		for _, h := range hexes {
-			if h.row > maxRow {
-				maxRow = h.row
+		minRow, maxRow, minCol, maxCol := 0, 0, 0, 0
+		for i, h := range input.Nodes {
+			if h.Row < minRow || i == 0 {
+				minRow = h.Row
 			}
-			if h.col > maxCol {
-				maxCol = h.col
+			if h.Row > maxRow || i == 0 {
+				maxRow = h.Row
 			}
+			if h.Col < minCol || i == 0 {
+				minCol = h.Col
+			}
+			if h.Col > maxCol || i == 0 {
+				maxCol = h.Col
+			}
+		}
+
+		// sanity and performance checks
+		if minCol < 1 || minRow < 1 {
+			response := errResponse{
+				Status: "error",
+				Errors: []errorObject{{
+					Code:   http.StatusBadRequest,
+					Detail: "col and row must be at least 1",
+				}},
+			}
+			w.Header().Set("Content-Type", "application/vnd.api+json")
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(response)
+			return
+		} else if maxCol > 40 || maxRow > 40 {
+			response := errResponse{
+				Status: "error",
+				Errors: []errorObject{{
+					Code:   http.StatusBadRequest,
+					Detail: "col and row must be at least 1",
+				}},
+			}
+			w.Header().Set("Content-Type", "application/vnd.api+json")
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(response)
+			return
 		}
 
 		// create the board, add all the stars, then add the wormholes
 		gb := board.NewBoard(maxRow, maxCol)
-		for _, h := range hexes {
-			gb.AddStar(h.name, h.row, h.col, h.econValue)
+		for _, h := range input.Nodes {
+			gb.AddStar(h.Name, h.Row, h.Col, h.EconValue)
 		}
-		for _, h := range hexes {
-			for _, target := range h.warps {
-				gb.AddWormHole(h.name, target)
+		for _, h := range input.Nodes {
+			for _, target := range h.Warps {
+				gb.AddWormHole(h.Name, target)
 			}
 		}
 
 		// save the board as an SVG file
 		w.Header().Set("content-type", "image/svg+xml")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(gb.AsSVG(mono))
+		_, _ = w.Write(gb.AsSVG(input.Mono))
 	}
 }

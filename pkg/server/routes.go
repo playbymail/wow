@@ -33,6 +33,6 @@ import (
 // It returns a mux which may be used directly.
 func (s *Server) Routes() http.Handler {
 	s.router = way.NewRouter()
-	s.router.HandleFunc("POST", "/api/map-data", s.handlePostMapData(true))
+	s.router.HandleFunc("POST", "/api/map-data", s.handlePostMapData())
 	return s.router
 }

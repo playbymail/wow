@@ -36,7 +36,7 @@ import (
 	"time"
 )
 
-// cmdServer creates a map
+// cmdServer starts a server that returns an SVG map.
 var cmdServer = &cobra.Command{
 	Use:   "server",
 	Short: "serve map api",
