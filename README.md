@@ -57,3 +57,31 @@ The API expects a single JSON object with the following shape:
             {"name": "Ur", "col": 7, "row": 2, "econ-value": 4, "warps": ["Erech"]}
         ]
     }
+
+
+# systemd
+See the
+[DO Tutorial](https://www.digitalocean.com/community/tutorials/how-to-sandbox-processes-with-systemd-on-ubuntu-20-04)
+for details on securing and locking down this as a service.
+
+FWIW, this is my starter:
+
+    /etc/systemd/system# cat wow.service
+    [Unit]
+    Description=WoW server
+    StartLimitIntervalSec=0
+    After=network-online.target
+    
+    [Service]
+    Type=simple
+    User=nobody
+    PIDFile=/run/wow.pid
+    WorkingDirectory=/var/www/wraith.dev/wow
+    ExecStart=/var/www/bin/wow
+    ExecReload=/bin/kill -USR1 $MAINPID
+    Restart=on-failure
+    RestartSec=1
+    
+    [Install]
+    WantedBy=multi-user.target
+
