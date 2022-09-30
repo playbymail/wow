@@ -33,9 +33,9 @@ import (
 // It returns a mux which may be used directly.
 func (s *Server) Routes(public string) http.Handler {
 	s.router = way.NewRouter()
-	s.router.Handle("GET", "/", s.handleIndex(public, 40, 40))
-	s.router.Handle("GET", "/map/color", s.handleStandardMap(public, true))
-	s.router.Handle("GET", "/map/mono", s.handleStandardMap(public, false))
-	s.router.HandleFunc("POST", "/api/map-data", s.handlePostMapData())
+	s.router.Handle("GET", "/wow", s.handleIndex(public, 40, 40))
+	s.router.Handle("GET", "/wow/map/color", s.handleStandardMap(public, true))
+	s.router.Handle("GET", "/wow/map/mono", s.handleStandardMap(public, false))
+	s.router.HandleFunc("POST", "/wow/api/map-data", s.handlePostMapData())
 	return s.router
 }
