@@ -36,6 +36,7 @@ func (s *Server) Routes(public string) http.Handler {
 	s.router.Handle("GET", "/wow", s.handleIndex(public, 40, 40))
 	s.router.Handle("GET", "/wow/map/color", s.handleStandardMap(public, true))
 	s.router.Handle("GET", "/wow/map/mono", s.handleStandardMap(public, false))
+	s.router.HandleFunc("GET", "/wow/map/random", s.handleRandomMap())
 	s.router.HandleFunc("POST", "/wow/api/map-data", s.handlePostMapData())
 	return s.router
 }

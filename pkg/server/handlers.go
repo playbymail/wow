@@ -28,9 +28,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/mdhender/wow/pkg/board"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -266,6 +268,135 @@ func (s *Server) handlePostMapData() http.HandlerFunc {
 		w.Header().Set("content-type", "image/svg+xml")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(gb.AsSVG(input.Mono))
+	}
+}
+
+// handleRandomMap does that
+func (s *Server) handleRandomMap() http.HandlerFunc {
+	type node struct {
+		Name      string   `json:"name"`
+		Col       int      `json:"col"`
+		Row       int      `json:"row"`
+		EconValue int      `json:"econ-value"` // non-zero only if hasStar
+		Warps     []string `json:"warps"`
+		distance  int
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var baseMap [22][22]*node
+		for col := 1; col <= 20; col++ {
+			for row := 1; row <= 20; row++ {
+				// each hex has a 1 in 12 chance of containing a star
+				if rand.Intn(12) != 1 {
+					continue
+				}
+				// can't have a neighbor
+				if baseMap[col-1][row-1] != nil {
+					continue
+				} else if baseMap[col-1][row] != nil {
+					continue
+				} else if baseMap[col-1][row+1] != nil {
+					continue
+				} else if baseMap[col][row-1] != nil {
+					continue
+				} else if baseMap[col][row+1] != nil {
+					continue
+				} else if baseMap[col+1][row-1] != nil {
+					continue
+				} else if baseMap[col+1][row] != nil {
+					continue
+				} else if baseMap[col+1][row+1] != nil {
+					continue
+				}
+				// a good range for econ values is 0..5 with higher values being rarer
+				var econValue int
+				switch rand.Intn(23) {
+				case 0:
+					econValue = 5
+				case 1, 2:
+					econValue = 4
+				case 3, 4, 5, 6:
+					econValue = 3
+				case 7, 8, 9, 10, 11, 12:
+					econValue = 2
+				case 13, 14, 15, 16, 17, 18, 19, 20:
+					econValue = 1
+				default:
+					econValue = 0
+				}
+				baseMap[col][row] = &node{Name: fmt.Sprintf("N%02d%02d", col, row), Col: col, Row: row, EconValue: econValue}
+			}
+		}
+
+		var nodes []*node
+		for col := 1; col <= 20; col++ {
+			for row := 1; row <= 20; row++ {
+				if baseMap[col][row] != nil {
+					nodes = append(nodes, baseMap[col][row])
+				}
+			}
+		}
+
+		// each star has a 1 in 4 chance of having a warp to each of the 4 nearest stars
+		for _, n := range nodes {
+			// fetch eligible stars (can't already have 4 warps out) and sort them by distance
+			var neighbors []*node
+			for _, x := range nodes {
+				if x != n {
+					x.distance = (n.Col-x.Col)*(n.Col-x.Col) + (n.Row-x.Row)*(n.Row-x.Row)
+					neighbors = append(neighbors, x)
+				}
+			}
+			// sort the neighbors by distance
+			for i := 0; i < len(neighbors); i++ {
+				for j := i + 1; j < len(neighbors); j++ {
+					if neighbors[i].distance > neighbors[j].distance {
+						neighbors[i], neighbors[j] = neighbors[j], neighbors[i]
+					}
+				}
+			}
+			// then check up to the first four neighbors warp lines
+			for i := 0; i < 4 && i < len(neighbors) && len(n.Warps) < 4; i++ {
+				// 1 in 4 chance of having a warp to this neighbor
+				if len(n.Warps) < 4 && len(neighbors[i].Warps) < 4 && rand.Intn(4) == 1 {
+					n.Warps = append(n.Warps, neighbors[i].Name)
+					neighbors[i].Warps = append(neighbors[i].Warps, n.Name)
+				}
+			}
+
+			if len(n.Warps) == 0 {
+				// all stars must have a warp. if we didn't get one above, force it.
+				for _, x := range neighbors {
+					if len(x.Warps) < 4 {
+						n.Warps = append(n.Warps, x.Name)
+						x.Warps = append(x.Warps, n.Name)
+						break
+					}
+				}
+			}
+		}
+
+		// create the board, add all the stars, then add the wormholes
+
+		// board will always be 20 x 20
+		gb := board.NewBoard(20, 20)
+
+		// add stars
+		for _, n := range nodes {
+			gb.AddStar(n.Name, n.Row, n.Col, n.EconValue)
+		}
+
+		// add wormholes
+		for _, n := range nodes {
+			for _, target := range n.Warps {
+				gb.AddWormHole(n.Name, target)
+			}
+		}
+
+		// save the board as an SVG file
+		w.Header().Set("content-type", "image/svg+xml")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(gb.AsSVG(true))
 	}
 }
 
