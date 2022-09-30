@@ -74,7 +74,7 @@ FWIW, this is my starter:
     
     [Service]
     Type=simple
-    User=nobody
+    DynamicUser=yes
     PIDFile=/run/wow.pid
     WorkingDirectory=/var/www/wraith.dev/wow
     ExecStart=/var/www/bin/wow server
@@ -85,3 +85,5 @@ FWIW, this is my starter:
     [Install]
     WantedBy=multi-user.target
 
+To get this to work, I built the project and copied the executable into the bin directory.
+I then copied the contents of the public directory into the `WorkingDirectory` from the service file.
