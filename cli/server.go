@@ -42,8 +42,6 @@ var cmdServer = &cobra.Command{
 	Use:   "server",
 	Short: "serve map api",
 	Run: func(cmd *cobra.Command, args []string) {
-		host, port := "", "8080"
-
 		s, err := server.New()
 		if err != nil {
 			log.Fatal(err)
@@ -57,14 +55,15 @@ var cmdServer = &cobra.Command{
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  60 * time.Second,
-			Addr:         net.JoinHostPort(host, port),
-			Handler:      s.Routes(filepath.Join("..", "public")),
+			Addr:         net.JoinHostPort(argsServer.host, argsServer.port),
+			Handler:      s.Routes(filepath.Clean(argsServer.public)),
 		}
 
 		// start the server as a go routine.
 		// this allows us to catch signals to shut it down gracefully.
 		go func(srv *http.Server) {
 			log.Printf("[server] address %q\n", srv.Addr)
+			log.Printf("[server] public  %q\n", filepath.Clean(argsServer.public))
 			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				log.Fatal(err)
 			}
@@ -86,6 +85,15 @@ var cmdServer = &cobra.Command{
 	},
 }
 
+var argsServer struct {
+	host   string
+	port   string
+	public string
+}
+
 func init() {
 	cmdBase.AddCommand(cmdServer)
+	cmdServer.Flags().StringVar(&argsServer.host, "host", "", "host interface to bind to")
+	cmdServer.Flags().StringVar(&argsServer.port, "port", "8080", "port to serve on")
+	cmdServer.Flags().StringVar(&argsServer.public, "public", ".", "path to serve files from")
 }

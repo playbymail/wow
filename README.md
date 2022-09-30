@@ -77,7 +77,7 @@ FWIW, this is my starter:
     User=nobody
     PIDFile=/run/wow.pid
     WorkingDirectory=/var/www/wraith.dev/wow
-    ExecStart=/var/www/bin/wow
+    ExecStart=/var/www/bin/wow server
     ExecReload=/bin/kill -USR1 $MAINPID
     Restart=on-failure
     RestartSec=1
