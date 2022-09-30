@@ -33,6 +33,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"path/filepath"
 	"time"
 )
 
@@ -57,7 +58,7 @@ var cmdServer = &cobra.Command{
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  60 * time.Second,
 			Addr:         net.JoinHostPort(host, port),
-			Handler:      s.Routes(),
+			Handler:      s.Routes(filepath.Join("..", "public")),
 		}
 
 		// start the server as a go routine.

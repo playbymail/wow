@@ -25,13 +25,35 @@
 package server
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"github.com/mdhender/wow/pkg/board"
 	"io"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"unicode/utf8"
 )
+
+// handleIndex does that
+func (s *Server) handleIndex(public string, maxCols, maxRows int) http.HandlerFunc {
+	index, err := os.ReadFile(filepath.Join(public, "index.html"))
+	if err != nil {
+		log.Printf("[server] %+v\n", err)
+		return func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(index)
+	}
+}
 
 // handlePostMapData accepts map data as CSV and returns an SVG or an error page.
 func (s *Server) handlePostMapData() http.HandlerFunc {
@@ -104,12 +126,39 @@ func (s *Server) handlePostMapData() http.HandlerFunc {
 			}
 			for k, v := range r.Form {
 				switch k {
-				case "mono":
+				case "data":
 					if len(v) != 1 || !utf8.ValidString(v[0]) {
 						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 						return
 					}
-					input.Mono = v[0] == "true"
+					r := csv.NewReader(strings.NewReader(v[0]))
+					r.FieldsPerRecord = -1 // allow variable number of fields per line
+					for {
+						record, err := r.Read()
+						if err != nil {
+							break
+						} else if len(record) < 5 {
+							continue
+						}
+						n := node{
+							Name:      strings.TrimSpace(record[0]),
+							Col:       atoi(record[1]),
+							Row:       atoi(record[2]),
+							EconValue: atoi(record[3]),
+						}
+						for _, dest := range record[4:] {
+							if dest = strings.TrimSpace(dest); len(dest) != 0 {
+								n.Warps = append(n.Warps, dest)
+							}
+						}
+						input.Nodes = append(input.Nodes, n)
+					}
+				case "fill-type":
+					if len(v) != 1 || !utf8.ValidString(v[0]) {
+						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+						return
+					}
+					input.Mono = v[0] == "mono"
 				}
 			}
 		case "text/html":
@@ -218,4 +267,31 @@ func (s *Server) handlePostMapData() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(gb.AsSVG(input.Mono))
 	}
+}
+
+// handleStandardMap does that
+func (s *Server) handleStandardMap(static string, color bool) http.HandlerFunc {
+	var filename string
+	if color {
+		filename = filepath.Join(static, "svg-test.svg")
+	} else {
+		filename = filepath.Join(static, "svg-mono-test.svg")
+	}
+	index, err := os.ReadFile(filename)
+	if err != nil {
+		log.Printf("[server] %+v\n", err)
+		return func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "image/svg+xml")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(index)
+	}
+}
+
+func atoi(s string) int {
+	i, _ := strconv.Atoi(strings.TrimSpace(s))
+	return i
 }
