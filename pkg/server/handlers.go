@@ -283,6 +283,21 @@ func (s *Server) handleRandomMap() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		// names returns a shuffled list of starry sounding names for stars.
+		var names = []string{
+			"Afak", "Agrab", "Akkad", "Al-Diniye", "Al-Esotam", "Al-Hafriyat", "Annah", "Arbela", "Arbīl", "Arrapkha",
+			"Ashur", "Assur", "Athína", "Awan", "Babil", "Babylon", "Baghdad", "Borsippa", "Corinth", "Kurigalzu", "El-Ana",
+			"El-Is", "En-Aasar", "En-Amitat", "En-Shubat", "Erech", "Erétria", "Eshnunna", "Gubba", "Hafriyat", "Haradum",
+			"Hillah", "Kassite", "Khirbit", "Khūzestān", "Kirkūk", "Kutha", "Kórinthos", "Lagash", "Mari", "Mashkan", "Nagar",
+			"Neribtum", "Nimrud", "Nineveh", "Nippur", "Nuffar", "Nuzi", "Opis", "Ramad", "Rapiqum", "Riblah", "Ródos",
+			"Shaduppum", "Shapir", "Shushan", "Shūsh", "Sippar", "Siracusa", "Sirpurla", "Sparta", "Spárti", "Susa", "Tayma",
+			"Te Ashyia", "Te Brak", "Te Ishchali", "Te Leilan", "Thebes", "Thíva", "Tuttul", "Tutub", "Umm", "Uqair", "Ur",
+			"Urhai", "Urkesh", "Uruk", "Árgos", "Égina", "Şanlıurfa",
+		}
+		rand.Shuffle(len(names), func(i, j int) {
+			names[i], names[j] = names[j], names[i]
+		})
+
 		var baseMap [22][22]*node
 		for col := 1; col <= 20; col++ {
 			for row := 1; row <= 20; row++ {
@@ -324,7 +339,13 @@ func (s *Server) handleRandomMap() http.HandlerFunc {
 				default:
 					econValue = 0
 				}
-				baseMap[col][row] = &node{Name: fmt.Sprintf("N%02d%02d", col, row), Col: col, Row: row, EconValue: econValue}
+				var name string
+				if len(names) == 0 {
+					name = fmt.Sprintf("N%02d%02d", col, row)
+				} else {
+					name, names = names[0], names[1:]
+				}
+				baseMap[col][row] = &node{Name: name, Col: col, Row: row, EconValue: econValue}
 			}
 		}
 
