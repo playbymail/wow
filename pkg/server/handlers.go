@@ -260,7 +260,12 @@ func (s *Server) handlePostMapData() http.HandlerFunc {
 		}
 		for _, h := range input.Nodes {
 			for _, target := range h.Warps {
-				gb.AddWormHole(h.Name, target)
+				if err := gb.AddWormHole(h.Name, target); err != nil {
+					w.Header().Set("content-type", "text/html")
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte(fmt.Sprintf(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Wars of Warp</title></head><body><p>Sorry, but there was an error with the input</p><pre><code>%+v</code></pre>`, err)))
+					return
+				}
 			}
 		}
 
@@ -410,7 +415,12 @@ func (s *Server) handleRandomMap() http.HandlerFunc {
 		// add wormholes
 		for _, n := range nodes {
 			for _, target := range n.Warps {
-				gb.AddWormHole(n.Name, target)
+				if err := gb.AddWormHole(n.Name, target); err != nil {
+					w.Header().Set("content-type", "text/html")
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte(fmt.Sprintf(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Wars of Warp</title></head><body><p>Sorry, but there was an error with the input</p><pre><code>%+v</code></pre>`, err)))
+					return
+				}
 			}
 		}
 

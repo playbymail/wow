@@ -64,20 +64,22 @@ func (b *Board) AddStar(name string, row, col int, econValue int) {
 	b.Stars[name] = hex
 }
 
-func (b *Board) AddWormHole(sourceStar, targetStar string) {
+func (b *Board) AddWormHole(sourceStar, targetStar string) error {
 	// lookup both ends of the wormhole
 	from, ok := b.Stars[sourceStar]
 	if !ok {
-		panic(fmt.Sprintf("board: invalid source star: %q", sourceStar))
+		return fmt.Errorf("board: invalid source star: %q", sourceStar)
 	}
 	to, ok := b.Stars[targetStar]
 	if !ok {
-		panic(fmt.Sprintf("board: invalid target star: %q", targetStar))
+		return fmt.Errorf("board: invalid target star: %q", targetStar)
 	}
 
 	// add to exits if not there already
 	from.AddWormHole(to)
 	to.AddWormHole(from)
+
+	return nil
 }
 
 func (b *Board) AsHTML(mono bool) []byte {
