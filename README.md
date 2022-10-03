@@ -6,12 +6,17 @@ Join the Groups.io [WarpWar forum](https://groups.io/g/warpwar/messages) to find
 
 Rules taken from [GC00](http://www.contrib.andrew.cmu.edu/usr/gc00/reviews/warpwar.html) archive.
 
-# Building
+## Online Generator
+The most recent release of WoW is hosted at [wraith.dev/wow](https://wraith.dev/wow).
+You can download example maps in color or black-and-white or generate your own.
+
+# Running your own server
+## Building
 1. Install Go.
 2. Run `go build` in the root directory.
 
-# Running
-## Create a file locally
+## Running
+### Create a file locally
 1. Update the data in `cli/create.go`.
 2. Run `./wow create`. 
 
